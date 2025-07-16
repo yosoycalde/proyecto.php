@@ -14,7 +14,7 @@
         <h1>Procesador de Inventarios Ineditto → ContaPyme</h1>
 
         <div class="upload-section">
-            <h2>1. Configuración inicial</h2>
+            <h2>Configuración inicial</h2>
             <div class="config-buttons">
                 <button id="importCentrosBtn" class="config-btn">Importar Centros de Costos</button>
                 <button id="importElementosBtn" class="config-btn">Importar Elementos</button>
@@ -23,7 +23,7 @@
         </div>
 
         <div class="upload-section">
-            <h2>2. Procesar inventario Ineditto</h2>
+            <h2>Procesar inventario Ineditto</h2>
             <form id="uploadForm" enctype="multipart/form-data">
                 <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
                 <button type="submit">Procesar Archivo</button>
@@ -35,13 +35,13 @@
         </div>
 
         <div class="results-section" id="results" style="display: none;">
-            <h2>3. Resultados del procesamiento</h2>
+            <h2>Resultados del procesamiento</h2>
             <div id="processInfo"></div>
             <button id="downloadBtn" class="download-btn">Descargar CSV para ContaPyme</button>
         </div>
 
         <div class="preview-section" id="preview" style="display: none;">
-            <h2>4. Vista previa formato ContaPyme</h2>
+            <h2>Vista previa formato ContaPyme</h2>
             <div class="format-description">
                 <p><strong>Formato de salida:</strong> IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC,
                     ILABOR, QCANTLUN</p>
@@ -55,4 +55,5 @@
 
     <script src="js/main.js"></script>
 </body>
+
 </html>
