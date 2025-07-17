@@ -11,9 +11,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Manejar importación de centros de costos
     importCentrosBtn.addEventListener('click', function () {
+        configFile.accept = '.csv,.xlsx,.xls'; // Actualizar tipos aceptados
         configFile.onchange = function () {
             if (this.files.length > 0) {
-                importarArchivo('import_centros', this.files[0], 'Centros de Costos');
+                const file = this.files[0];
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                // Validar formato
+                if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
+                    showMessage('Solo se permiten archivos CSV, XLSX o XLS', 'error');
+                    return;
+                }
+                
+                // Mostrar advertencia para XLS
+                if (fileExt === 'xls') {
+                    if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
+                        return;
+                    }
+                }
+                
+                importarArchivo('import_centros', file, 'Centros de Costos');
             }
         };
         configFile.click();
@@ -21,9 +38,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Manejar importación de elementos
     importElementosBtn.addEventListener('click', function () {
+        configFile.accept = '.csv,.xlsx,.xls'; // Actualizar tipos aceptados
         configFile.onchange = function () {
             if (this.files.length > 0) {
-                importarArchivo('import_elementos', this.files[0], 'Elementos');
+                const file = this.files[0];
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                // Validar formato
+                if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
+                    showMessage('Solo se permiten archivos CSV, XLSX o XLS', 'error');
+                    return;
+                }
+                
+                // Mostrar advertencia para XLS
+                if (fileExt === 'xls') {
+                    if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
+                        return;
+                    }
+                }
+                
+                importarArchivo('import_elementos', file, 'Elementos');
             }
         };
         configFile.click();
@@ -34,8 +68,10 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('configFile', file);
         formData.append('action', action);
 
-        // Mostrar mensaje de carga
-        showMessage(`Importando ${tipo}...`, 'info');
+        const fileExt = file.name.split('.').pop().toUpperCase();
+        
+        // Mostrar mensaje de carga con tipo de archivo
+        showMessage(`Procesando archivo ${fileExt} - Importando ${tipo}...`, 'info');
 
         fetch('includes/upload_handler.php', {
             method: 'POST',
@@ -44,14 +80,14 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showMessage(`✅ ${tipo} importados exitosamente (${data.records} registros)`, 'success');
+                    showMessage(`✅ ${data.message} (${data.records} registros)`, 'success');
                 } else {
                     showMessage(`❌ Error al importar ${tipo}: ${data.message}`, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showMessage(`❌ Error al importar ${tipo}`, 'error');
+                showMessage(`❌ Error de conexión al importar ${tipo}`, 'error');
             });
     }
 
@@ -63,15 +99,31 @@ document.addEventListener('DOMContentLoaded', function () {
         const fileInput = document.getElementById('csvFile');
 
         if (fileInput.files.length === 0) {
-            showMessage('Por favor selecciona un archivo CSV de inventario', 'error');
+            showMessage('Por favor selecciona un archivo de inventario', 'error');
             return;
         }
 
-        formData.append('csvFile', fileInput.files[0]);
+        const file = fileInput.files[0];
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        
+        // Validar formato de archivo
+        if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
+            showMessage('Solo se permiten archivos CSV, XLSX o XLS para inventarios', 'error');
+            return;
+        }
+
+        // Mostrar advertencia para XLS
+        if (fileExt === 'xls') {
+            if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
+                return;
+            }
+        }
+
+        formData.append('csvFile', file);
 
         // Mostrar loading
         const processInfo = document.getElementById('processInfo');
-        processInfo.innerHTML = '<p class="info">🔄 Procesando archivo de inventario...</p>';
+        processInfo.innerHTML = `<p class="info">🔄 Procesando archivo ${fileExt.toUpperCase()} de inventario...</p>`;
         resultsSection.style.display = 'block';
 
         fetch('includes/upload_handler.php', {
@@ -84,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const stats = data.statistics;
                     processInfo.innerHTML = `
                     <div class="success">
-                        <h3>✅ Archivo procesado exitosamente</h3>
+                        <h3>✅ ${data.message}</h3>
                         <div class="stats-grid">
                             <div class="stat-item">
                                 <strong>Registros procesados:</strong> ${data.records}
@@ -156,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.distribucion_centros_costo) {
                         const distribucionDiv = document.getElementById('distribucion');
                         if (distribucionDiv) {
-                            let distribucionHTML = '<h4>Distribución por Centro de Costo:</h4><ul>';
+                            let distribucionHTML = '<h4>📊 Distribución por Centro de Costo:</h4><ul>';
                             data.distribucion_centros_costo.forEach(item => {
                                 distribucionHTML += `<li><strong>${item.centro_costo_asignado}:</strong> ${item.cantidad_registros} registros</li>`;
                             });
@@ -190,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 z-index: 1000;
                 max-width: 400px;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                transition: all 0.3s ease;
             `;
             document.body.appendChild(messageDiv);
         }
@@ -211,10 +264,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
         messageDiv.textContent = message;
         messageDiv.style.display = 'block';
+        messageDiv.style.opacity = '1';
 
-        // Auto-ocultar después de 5 segundos
+        // Auto-ocultar después de 6 segundos
         setTimeout(() => {
-            messageDiv.style.display = 'none';
-        }, 5000);
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 300);
+        }, 6000);
+    }
+
+    // Actualizar el input de archivo principal para aceptar Excel
+    const csvFileInput = document.getElementById('csvFile');
+    if (csvFileInput) {
+        csvFileInput.accept = '.csv,.xlsx,.xls';
     }
 });

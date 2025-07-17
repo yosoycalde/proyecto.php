@@ -2,6 +2,170 @@
 require_once __DIR__ . '/../config/database.php';
 
 /**
+ * Función para convertir Excel a CSV usando método nativo PHP
+ */
+function convertirExcelACSVNativo($archivoExcel)
+{
+    $fileExtension = strtolower(pathinfo($archivoExcel, PATHINFO_EXTENSION));
+
+    if ($fileExtension === 'csv') {
+        return $archivoExcel; // Ya es CSV, no necesita conversión
+    }
+
+    if ($fileExtension === 'xlsx') {
+        return convertirXLSXACSVNativo($archivoExcel);
+    } elseif ($fileExtension === 'xls') {
+        // Para XLS, recomendamos conversión manual
+        throw new Exception("Archivos XLS no soportados directamente. Por favor, convierta a XLSX o CSV desde Excel.");
+    }
+
+    throw new Exception("Formato de archivo no soportado: $fileExtension");
+}
+
+/**
+ * Convertir XLSX a CSV usando ZipArchive y SimpleXML
+ */
+function convertirXLSXACSVNativo($archivoXLSX)
+{
+    if (!class_exists('ZipArchive')) {
+        throw new Exception("La extensión ZipArchive de PHP es requerida para procesar archivos XLSX");
+    }
+
+    try {
+        $csvPath = pathinfo($archivoXLSX, PATHINFO_DIRNAME) . '/' .
+            pathinfo($archivoXLSX, PATHINFO_FILENAME) . '_converted.csv';
+
+        $zip = new ZipArchive();
+        $result = $zip->open($archivoXLSX);
+
+        if ($result !== TRUE) {
+            throw new Exception("No se pudo abrir el archivo XLSX. Código de error: $result");
+        }
+
+        // Leer strings compartidas
+        $sharedStrings = [];
+        if (($sharedStringsXML = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
+            $xml = simplexml_load_string($sharedStringsXML);
+            if ($xml !== false) {
+                foreach ($xml->si as $si) {
+                    if (isset($si->t)) {
+                        $sharedStrings[] = (string) $si->t;
+                    } elseif (isset($si->r)) {
+                        // Texto enriquecido
+                        $text = '';
+                        foreach ($si->r as $r) {
+                            if (isset($r->t)) {
+                                $text .= (string) $r->t;
+                            }
+                        }
+                        $sharedStrings[] = $text;
+                    }
+                }
+            }
+        }
+
+        // Leer la primera hoja de trabajo
+        $worksheetXML = $zip->getFromName('xl/worksheets/sheet1.xml');
+        if ($worksheetXML === false) {
+            throw new Exception("No se pudo leer la hoja de trabajo del archivo XLSX");
+        }
+
+        $zip->close();
+
+        // Parsear XML de la hoja de trabajo
+        $xml = simplexml_load_string($worksheetXML);
+        if ($xml === false) {
+            throw new Exception("No se pudo parsear el contenido XML de la hoja de trabajo");
+        }
+
+        $csvFile = fopen($csvPath, 'w');
+        if ($csvFile === false) {
+            throw new Exception("No se pudo crear el archivo CSV temporal");
+        }
+
+        // Procesar filas
+        if (isset($xml->sheetData->row)) {
+            foreach ($xml->sheetData->row as $row) {
+                $rowData = [];
+                $maxCol = 0;
+
+                // Primero, determinar el número máximo de columnas
+                foreach ($row->c as $cell) {
+                    $cellRef = (string) $cell['r'];
+                    $colNum = obtenerNumeroColumna($cellRef);
+                    if ($colNum > $maxCol) {
+                        $maxCol = $colNum;
+                    }
+                }
+
+                // Inicializar array con celdas vacías
+                for ($i = 0; $i <= $maxCol; $i++) {
+                    $rowData[$i] = '';
+                }
+
+                // Llenar datos de celdas
+                foreach ($row->c as $cell) {
+                    $cellRef = (string) $cell['r'];
+                    $colNum = obtenerNumeroColumna($cellRef);
+                    $cellValue = '';
+
+                    if (isset($cell['t']) && (string) $cell['t'] === 's') {
+                        // Referencia a string compartida
+                        $stringIndex = (int) $cell->v;
+                        if (isset($sharedStrings[$stringIndex])) {
+                            $cellValue = $sharedStrings[$stringIndex];
+                        }
+                    } elseif (isset($cell->v)) {
+                        $cellValue = (string) $cell->v;
+                    }
+
+                    $rowData[$colNum] = $cellValue;
+                }
+
+                // Remover celdas vacías del final
+                $rowData = array_values($rowData);
+                while (count($rowData) > 0 && end($rowData) === '') {
+                    array_pop($rowData);
+                }
+
+                // Escribir fila si no está completamente vacía
+                if (!empty($rowData) && !empty(array_filter($rowData))) {
+                    fputcsv($csvFile, $rowData);
+                }
+            }
+        }
+
+        fclose($csvFile);
+        return $csvPath;
+
+    } catch (Exception $e) {
+        if (isset($csvFile) && $csvFile !== false) {
+            fclose($csvFile);
+        }
+        if (isset($csvPath) && file_exists($csvPath)) {
+            unlink($csvPath);
+        }
+        throw new Exception("Error convirtiendo XLSX a CSV: " . $e->getMessage());
+    }
+}
+
+/**
+ * Obtener número de columna desde referencia de celda (ej: A1 -> 0, B1 -> 1)
+ */
+function obtenerNumeroColumna($cellRef)
+{
+    $col = preg_replace('/[0-9]+/', '', $cellRef);
+    $colNum = 0;
+    $len = strlen($col);
+
+    for ($i = 0; $i < $len; $i++) {
+        $colNum = $colNum * 26 + (ord($col[$i]) - ord('A') + 1);
+    }
+
+    return $colNum - 1; // Convertir a índice base 0
+}
+
+/**
  * Obtiene el centro de costo según la lógica del negocio
  */
 function obtenerCentroCosto($ilabor, $codigo_elemento)
@@ -76,7 +240,7 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
 }
 
 /**
- * Procesa el archivo CSV de inventario de Ineditto
+ * Procesa el archivo CSV de inventario de Ineditto (ahora compatible con Excel)
  */
 function procesarInventarioIneditto($archivo_csv)
 {
@@ -87,21 +251,29 @@ function procesarInventarioIneditto($archivo_csv)
         // Limpiar tabla temporal
         $conn->exec("DELETE FROM inventarios_temp");
 
-        // Leer archivo CSV
-        $datos = [];
-        if (!file_exists($archivo_csv)) {
-            throw new Exception("Archivo CSV no encontrado: $archivo_csv");
+        // Verificar si es Excel y convertir si es necesario
+        $fileExtension = strtolower(pathinfo($archivo_csv, PATHINFO_EXTENSION));
+        $archivoAProcesar = $archivo_csv;
+
+        if (in_array($fileExtension, ['xlsx', 'xls'])) {
+            $archivoAProcesar = convertirExcelACSVNativo($archivo_csv);
         }
 
-        $handle = fopen($archivo_csv, "r");
+        // Leer archivo CSV
+        $datos = [];
+        if (!file_exists($archivoAProcesar)) {
+            throw new Exception("Archivo no encontrado: $archivoAProcesar");
+        }
+
+        $handle = fopen($archivoAProcesar, "r");
         if ($handle === FALSE) {
-            throw new Exception("No se pudo abrir el archivo CSV");
+            throw new Exception("No se pudo abrir el archivo");
         }
 
         // Leer headers
         $headers = fgetcsv($handle, 1000, ",");
         if ($headers === FALSE) {
-            throw new Exception("No se pudieron leer los headers del archivo CSV");
+            throw new Exception("No se pudieron leer los headers del archivo");
         }
 
         // Limpiar headers de espacios en blanco y BOM
@@ -125,8 +297,13 @@ function procesarInventarioIneditto($archivo_csv)
         }
         fclose($handle);
 
+        // Limpiar archivo temporal si se creó
+        if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
+            unlink($archivoAProcesar);
+        }
+
         if (empty($datos)) {
-            throw new Exception("No se encontraron datos válidos en el archivo CSV");
+            throw new Exception("No se encontraron datos válidos en el archivo");
         }
 
         // Preparar consulta de inserción
@@ -180,147 +357,197 @@ function procesarInventarioIneditto($archivo_csv)
         return $procesados;
 
     } catch (Exception $e) {
+        // Limpiar archivo temporal en caso de error
+        if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
+            unlink($archivoAProcesar);
+        }
         throw new Exception("Error procesando inventario: " . $e->getMessage());
     }
 }
 
 /**
- * Importa centros de costos desde CSV
+ * Importa centros de costos desde CSV o Excel
  */
 function importarCentrosCostos($archivo_csv)
 {
     $database = new Database();
     $conn = $database->connect();
 
-    $importados = 0;
-    $handle = fopen($archivo_csv, "r");
+    try {
+        // Verificar si es Excel y convertir si es necesario
+        $fileExtension = strtolower(pathinfo($archivo_csv, PATHINFO_EXTENSION));
+        $archivoAProcesar = $archivo_csv;
 
-    if ($handle === FALSE) {
-        throw new Exception("No se pudo abrir el archivo de centros de costos");
-    }
+        if (in_array($fileExtension, ['xlsx', 'xls'])) {
+            $archivoAProcesar = convertirExcelACSVNativo($archivo_csv);
+        }
 
-    $headers = fgetcsv($handle, 1000, ",");
-    if ($headers === FALSE) {
-        throw new Exception("No se pudieron leer los headers del archivo");
-    }
+        $importados = 0;
+        $handle = fopen($archivoAProcesar, "r");
 
-    // Limpiar headers
-    $headers = array_map(function ($header) {
-        return trim(str_replace("\xEF\xBB\xBF", '', $header));
-    }, $headers);
+        if ($handle === FALSE) {
+            throw new Exception("No se pudo abrir el archivo de centros de costos");
+        }
 
-    $query = "INSERT INTO centros_costos (codigo, nombre) VALUES (:codigo, :nombre)
-              ON DUPLICATE KEY UPDATE nombre = :nombre2";
-    $stmt = $conn->prepare($query);
+        $headers = fgetcsv($handle, 1000, ",");
+        if ($headers === FALSE) {
+            throw new Exception("No se pudieron leer los headers del archivo");
+        }
 
-    while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-        if (count($row) === count($headers)) {
-            $data = array_combine($headers, $row);
+        // Limpiar headers
+        $headers = array_map(function ($header) {
+            return trim(str_replace("\xEF\xBB\xBF", '', $header));
+        }, $headers);
 
-            $codigo = trim($data['Codigo'] ?? $data['codigo'] ?? '');
-            $nombre = trim($data['Nombre'] ?? $data['nombre'] ?? '');
+        $query = "INSERT INTO centros_costos (codigo, nombre) VALUES (:codigo, :nombre)
+                  ON DUPLICATE KEY UPDATE nombre = :nombre2";
+        $stmt = $conn->prepare($query);
 
-            if (!empty($codigo) && !empty($nombre)) {
-                try {
-                    $stmt->execute([
-                        ':codigo' => $codigo,
-                        ':nombre' => $nombre,
-                        ':nombre2' => $nombre
-                    ]);
-                    $importados++;
-                } catch (Exception $e) {
-                    error_log("Error importando centro de costo: " . $e->getMessage());
+        while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            if (count($row) === count($headers)) {
+                $data = array_combine($headers, $row);
+
+                $codigo = trim($data['Codigo'] ?? $data['codigo'] ?? '');
+                $nombre = trim($data['Nombre'] ?? $data['nombre'] ?? '');
+
+                if (!empty($codigo) && !empty($nombre)) {
+                    try {
+                        $stmt->execute([
+                            ':codigo' => $codigo,
+                            ':nombre' => $nombre,
+                            ':nombre2' => $nombre
+                        ]);
+                        $importados++;
+                    } catch (Exception $e) {
+                        error_log("Error importando centro de costo: " . $e->getMessage());
+                    }
                 }
             }
         }
-    }
 
-    fclose($handle);
-    return $importados;
+        fclose($handle);
+
+        // Limpiar archivo temporal si se creó
+        if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
+            unlink($archivoAProcesar);
+        }
+
+        return $importados;
+
+    } catch (Exception $e) {
+        // Limpiar archivo temporal en caso de error
+        if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
+            unlink($archivoAProcesar);
+        }
+        throw $e;
+    }
 }
 
 /**
- * Importa elementos desde CSV
+ * Importa elementos desde CSV o Excel
  */
 function importarElementos($archivo_csv)
 {
     $database = new Database();
     $conn = $database->connect();
 
-    $importados = 0;
-    $handle = fopen($archivo_csv, "r");
+    try {
+        // Verificar si es Excel y convertir si es necesario
+        $fileExtension = strtolower(pathinfo($archivo_csv, PATHINFO_EXTENSION));
+        $archivoAProcesar = $archivo_csv;
 
-    if ($handle === FALSE) {
-        throw new Exception("No se pudo abrir el archivo de elementos");
-    }
+        if (in_array($fileExtension, ['xlsx', 'xls'])) {
+            $archivoAProcesar = convertirExcelACSVNativo($archivo_csv);
+        }
 
-    $headers = fgetcsv($handle, 1000, ",");
-    if ($headers === FALSE) {
-        throw new Exception("No se pudieron leer los headers del archivo");
-    }
+        $importados = 0;
+        $handle = fopen($archivoAProcesar, "r");
 
-    // Limpiar headers
-    $headers = array_map(function ($header) {
-        return trim(str_replace("\xEF\xBB\xBF", '', $header));
-    }, $headers);
+        if ($handle === FALSE) {
+            throw new Exception("No se pudo abrir el archivo de elementos");
+        }
 
-    $query = "INSERT INTO elementos 
-              (codigo, referencia, descripcion, centro_costo_1, centro_costo_2, centro_costo_3, centro_costo_4, centro_costo_5) 
-              VALUES (:codigo, :referencia, :descripcion, :cc1, :cc2, :cc3, :cc4, :cc5)
-              ON DUPLICATE KEY UPDATE 
-              referencia = :referencia2,
-              descripcion = :descripcion2,
-              centro_costo_1 = :cc1_2,
-              centro_costo_2 = :cc2_2,
-              centro_costo_3 = :cc3_2,
-              centro_costo_4 = :cc4_2,
-              centro_costo_5 = :cc5_2";
+        $headers = fgetcsv($handle, 1000, ",");
+        if ($headers === FALSE) {
+            throw new Exception("No se pudieron leer los headers del archivo");
+        }
 
-    $stmt = $conn->prepare($query);
+        // Limpiar headers
+        $headers = array_map(function ($header) {
+            return trim(str_replace("\xEF\xBB\xBF", '', $header));
+        }, $headers);
 
-    while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-        if (count($row) === count($headers)) {
-            $data = array_combine($headers, $row);
+        $query = "INSERT INTO elementos 
+                  (codigo, referencia, descripcion, centro_costo_1, centro_costo_2, centro_costo_3, centro_costo_4, centro_costo_5) 
+                  VALUES (:codigo, :referencia, :descripcion, :cc1, :cc2, :cc3, :cc4, :cc5)
+                  ON DUPLICATE KEY UPDATE 
+                  referencia = :referencia2,
+                  descripcion = :descripcion2,
+                  centro_costo_1 = :cc1_2,
+                  centro_costo_2 = :cc2_2,
+                  centro_costo_3 = :cc3_2,
+                  centro_costo_4 = :cc4_2,
+                  centro_costo_5 = :cc5_2";
 
-            $codigo = trim($data['Cód. Artículo'] ?? $data['codigo'] ?? '');
-            $referencia = trim($data['Referencia'] ?? $data['referencia'] ?? '');
-            $descripcion = trim($data['Descripción'] ?? $data['descripcion'] ?? '');
+        $stmt = $conn->prepare($query);
 
-            if (!empty($codigo)) {
-                try {
-                    $cc1 = !empty($data['Centro Costos 1']) ? trim($data['Centro Costos 1']) : null;
-                    $cc2 = !empty($data['Centro Costos 2']) ? trim($data['Centro Costos 2']) : null;
-                    $cc3 = !empty($data['Centro Costos 3']) ? trim($data['Centro Costos 3']) : null;
-                    $cc4 = !empty($data['Centro Costos 4']) ? trim($data['Centro Costos 4']) : null;
-                    $cc5 = !empty($data['Centro Costos 5']) ? trim($data['Centro Costos 5']) : null;
+        while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            if (count($row) === count($headers)) {
+                $data = array_combine($headers, $row);
 
-                    $stmt->execute([
-                        ':codigo' => $codigo,
-                        ':referencia' => $referencia,
-                        ':descripcion' => $descripcion,
-                        ':cc1' => $cc1,
-                        ':cc2' => $cc2,
-                        ':cc3' => $cc3,
-                        ':cc4' => $cc4,
-                        ':cc5' => $cc5,
-                        ':referencia2' => $referencia,
-                        ':descripcion2' => $descripcion,
-                        ':cc1_2' => $cc1,
-                        ':cc2_2' => $cc2,
-                        ':cc3_2' => $cc3,
-                        ':cc4_2' => $cc4,
-                        ':cc5_2' => $cc5
-                    ]);
-                    $importados++;
-                } catch (Exception $e) {
-                    error_log("Error importando elemento: " . $e->getMessage());
+                $codigo = trim($data['Cód. Artículo'] ?? $data['codigo'] ?? '');
+                $referencia = trim($data['Referencia'] ?? $data['referencia'] ?? '');
+                $descripcion = trim($data['Descripción'] ?? $data['descripcion'] ?? '');
+
+                if (!empty($codigo)) {
+                    try {
+                        $cc1 = !empty($data['Centro Costos 1']) ? trim($data['Centro Costos 1']) : null;
+                        $cc2 = !empty($data['Centro Costos 2']) ? trim($data['Centro Costos 2']) : null;
+                        $cc3 = !empty($data['Centro Costos 3']) ? trim($data['Centro Costos 3']) : null;
+                        $cc4 = !empty($data['Centro Costos 4']) ? trim($data['Centro Costos 4']) : null;
+                        $cc5 = !empty($data['Centro Costos 5']) ? trim($data['Centro Costos 5']) : null;
+
+                        $stmt->execute([
+                            ':codigo' => $codigo,
+                            ':referencia' => $referencia,
+                            ':descripcion' => $descripcion,
+                            ':cc1' => $cc1,
+                            ':cc2' => $cc2,
+                            ':cc3' => $cc3,
+                            ':cc4' => $cc4,
+                            ':cc5' => $cc5,
+                            ':referencia2' => $referencia,
+                            ':descripcion2' => $descripcion,
+                            ':cc1_2' => $cc1,
+                            ':cc2_2' => $cc2,
+                            ':cc3_2' => $cc3,
+                            ':cc4_2' => $cc4,
+                            ':cc5_2' => $cc5
+                        ]);
+                        $importados++;
+                    } catch (Exception $e) {
+                        error_log("Error importando elemento: " . $e->getMessage());
+                    }
                 }
             }
         }
-    }
 
-    fclose($handle);
-    return $importados;
+        fclose($handle);
+
+        // Limpiar archivo temporal si se creó
+        if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
+            unlink($archivoAProcesar);
+        }
+
+        return $importados;
+
+    } catch (Exception $e) {
+        // Limpiar archivo temporal en caso de error
+        if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
+            unlink($archivoAProcesar);
+        }
+        throw $e;
+    }
 }
 
 /**

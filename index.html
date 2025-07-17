@@ -28,17 +28,26 @@
                 </button>
             </div>
 
-            <input type="file" id="configFile" accept=".csv" style="display: none;">
+            <input type="file" id="configFile" accept=".csv,.xlsx,.xls" style="display: none;">
 
             <div class="config-info">
                 <h4>Formatos esperados:</h4>
                 <div class="format-list">
                     <div class="format-item">
-                        <strong>Centros de Costos:</strong> Codigo, Nombre
+                        <strong>Centros de Costos:</strong> CSV, XLSX o XLS con columnas: Codigo, Nombre
                     </div>
                     <div class="format-item">
-                        <strong>Elementos:</strong> Cód. Artículo, Referencia, Centro Costos 1, Centro Costos 2, etc.
+                        <strong>Elementos:</strong> CSV, XLSX o XLS con columnas: Cód. Artículo, Referencia, Centro Costos 1, Centro Costos 2, etc.
                     </div>
+                </div>
+                <div class="format-description">
+                    <p><strong>📝 Formatos soportados:</strong></p>
+                    <ul>
+                        <li><strong>CSV:</strong> Archivo de texto separado por comas</li>
+                        <li><strong>XLSX:</strong> Excel moderno (recomendado)</li>
+                        <li><strong>XLS:</strong> Excel antiguo (compatibilidad limitada)</li>
+                    </ul>
+                    <p><em>💡 Los archivos Excel se convierten automáticamente a CSV para procesamiento.</em></p>
                 </div>
             </div>
         </div>
@@ -46,12 +55,12 @@
         <!-- Sección de procesamiento de inventario -->
         <div class="upload-section">
             <h2>⚙️ Procesar Inventario Ineditto</h2>
-            <p class="section-description">Suba el archivo CSV exportado desde Ineditto para convertirlo al formato
+            <p class="section-description">Suba el archivo CSV o Excel exportado desde Ineditto para convertirlo al formato
                 ContaPyme.</p>
 
             <form id="uploadForm" enctype="multipart/form-data">
                 <div class="file-input-container">
-                    <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
+                    <input type="file" id="csvFile" name="csvFile" accept=".csv,.xlsx,.xls" required>
                     <button type="submit">🚀 Procesar Archivo</button>
                 </div>
             </form>
@@ -61,6 +70,13 @@
                 <div class="format-description">
                     <p><strong>Columnas requeridas:</strong></p>
                     <code>IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR, QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, SOBSERVAC</code>
+                    
+                    <p><strong>📂 Formatos aceptados:</strong></p>
+                    <ul>
+                        <li><strong>CSV:</strong> Archivo de texto con datos separados por comas</li>
+                        <li><strong>XLSX:</strong> Archivo Excel moderno (Office 2007+)</li>
+                        <li><strong>XLS:</strong> Archivo Excel clásico (compatibilidad básica)</li>
+                    </ul>
                 </div>
 
                 <div class="logic-explanation">
@@ -70,6 +86,7 @@
                         <li><strong>Si ILABOR está vacío:</strong> Se usa el Centro de Costo 1 del elemento</li>
                         <li><strong>Si no se encuentra ninguno:</strong> Se asigna el centro de costo por defecto
                             (REVISTAS)</li>
+                        <li><strong>Archivos Excel:</strong> Se procesan automáticamente sin pérdida de datos</li>
                     </ul>
                 </div>
             </div>
@@ -94,7 +111,7 @@
                 <p><strong>🎯 Formato de salida ContaPyme:</strong></p>
                 <code>IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR, QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, SOBSERVAC</code>
                 <p class="note"><em>Nota: Los campos ILABOR y días de la semana (MAR-DOM) se envían vacíos según
-                        especificación.</em></p>
+                        especificación. La salida siempre es en formato CSV.</em></p>
             </div>
 
             <div id="distribucion" class="distribucion-section"></div>
