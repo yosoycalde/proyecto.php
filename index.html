@@ -13,43 +13,121 @@
     <div class="container">
         <h1>Procesador de Inventarios Ineditto → ContaPyme</h1>
 
+        <!-- Sección de Configuración Inicial -->
         <div class="upload-section">
-            <h2>Configuración inicial</h2>
+            <h2>📋 Configuración Inicial</h2>
+            <p style="margin-bottom: 15px; color: #6c757d;">
+                Antes de procesar inventarios, debe importar los catálogos de centros de costos y elementos.
+            </p>
+
             <div class="config-buttons">
-                <button id="importCentrosBtn" class="config-btn">Importar Centros de Costos</button>
-                <button id="importElementosBtn" class="config-btn">Importar Elementos</button>
+                <button id="importCentrosBtn" class="config-btn"
+                    data-tooltip="Importar archivo CSV con códigos y nombres de centros de costos">
+                    📊 Importar Centros de Costos
+                </button>
+                <button id="importElementosBtn" class="config-btn"
+                    data-tooltip="Importar archivo CSV/Excel con elementos y sus centros de costos asignados">
+                    🔧 Importar Elementos
+                </button>
             </div>
-            <input type="file" id="configFile" accept=".csv" style="display: none;">
+
+            <input type="file" id="configFile" accept=".csv,.xlsx,.xls" style="display: none;">
+
+            <div class="format-info">
+                <h3>Formatos esperados:</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <strong>Centros de Costos:</strong>
+                        <p>Codigo, Nombre</p>
+                        <small style="color: #6c757d;">Ejemplo: 11212317001, REVISTAS</small>
+                    </div>
+                    <div>
+                        <strong>Elementos:</strong>
+                        <p>Cód. Artículo, Referencia, Centro Costos 1, Centro Costos 2, ...</p>
+                        <small style="color: #6c757d;">Acepta archivos CSV y Excel (.xlsx, .xls)</small>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- Sección de Procesamiento de Inventario -->
         <div class="upload-section">
-            <h2>Procesar inventario Ineditto</h2>
+            <h2>📦 Procesar Inventario Ineditto</h2>
             <form id="uploadForm" enctype="multipart/form-data">
-                <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
-                <button type="submit">Procesar Archivo</button>
+                <input type="file" id="csvFile" name="csvFile" accept=".csv" required
+                    placeholder="Seleccionar archivo CSV de inventario...">
+                <button type="submit">🚀 Procesar Archivo</button>
             </form>
+
             <div class="format-info">
                 <h3>Formato esperado del archivo Ineditto:</h3>
-                <p>codigo elemento, referencia, cantidad, fecha_movimiento, ILABOR, observaciones</p>
+                <p>codigo_elemento, referencia, cantidad, fecha_movimiento, ILABOR, observaciones</p>
+
+                <div style="margin-top: 10px;">
+                    <strong>Notas importantes:</strong>
+                    <ul style="margin-top: 8px; color: #6c757d; font-size: 14px;">
+                        <li>Si <strong>ILABOR</strong> está vacío, se usará el Centro Costos 1 del elemento</li>
+                        <li>Si <strong>ILABOR</strong> tiene valor, debe existir en la tabla de centros de costos</li>
+                        <li>Formato de fecha: YYYY-MM-DD o DD/MM/YYYY</li>
+                        <li>Archivo CSV separado por comas</li>
+                    </ul>
+                </div>
             </div>
         </div>
 
+        <!-- Sección de Resultados -->
         <div class="results-section" id="results" style="display: none;">
-            <h2>Resultados del procesamiento</h2>
+            <h2>📊 Resultados del Procesamiento</h2>
             <div id="processInfo"></div>
-            <button id="downloadBtn" class="download-btn">Descargar CSV para ContaPyme</button>
+            <button id="downloadBtn" class="download-btn" style="display: none;">
+                💾 Descargar CSV para ContaPyme
+            </button>
         </div>
 
+        <!-- Sección de Vista Previa -->
         <div class="preview-section" id="preview" style="display: none;">
-            <h2>Vista previa formato ContaPyme</h2>
+            <h2>👁️ Vista Previa Formato ContaPyme</h2>
             <div class="format-description">
                 <p><strong>Formato de salida:</strong> IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC,
-                    ILABOR, QCANTLUN</p>
+                    ILABOR, QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, SOBSERVAC</p>
+                <small style="color: #6c757d;">Mostrando máximo 10 registros para vista previa</small>
             </div>
-            <table id="dataTable">
-                <thead id="tableHead"></thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+
+            <div style="overflow-x: auto;">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div
+            style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #17a2b8;">
+            <h3 style="color: #17a2b8; margin-bottom: 15px;">ℹ️ Información del Sistema</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <div>
+                    <strong>Flujo de trabajo:</strong>
+                    <ol style="margin-top: 8px; color: #6c757d; font-size: 14px;">
+                        <li>Importar centros de costos</li>
+                        <li>Importar elementos</li>
+                        <li>Procesar inventario Ineditto</li>
+                        <li>Descargar CSV para ContaPyme</li>
+                    </ol>
+                </div>
+                <div>
+                    <strong>Campos del archivo ContaPyme:</strong>
+                    <ul style="margin-top: 8px; color: #6c757d; font-size: 12px;">
+                        <li><strong>IEMP:</strong> Código empresa (001)</li>
+                        <li><strong>FSOPORT:</strong> Fecha soporte (dd/mm/yyyy)</li>
+                        <li><strong>ITDSOP:</strong> Tipo documento (INV)</li>
+                        <li><strong>INUMSOP:</strong> Número soporte</li>
+                        <li><strong>IRECURSO:</strong> Código elemento</li>
+                        <li><strong>ICCSUBCC:</strong> Centro de costo</li>
+                        <li><strong>QCANTLUN:</strong> Cantidad</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
