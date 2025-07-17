@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor CSV Ineditto → ContaPyme</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .format-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .preview-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔄 Conversor CSV: Ineditto → ContaPyme</h1>
+
+        <div class="section">
+            <h2>📁 Cargar Archivo de Ineditto</h2>
+            <input type="file" id="fileInput" accept=".csv" />
+            <button onclick="processFile()">Procesar Archivo</button>
+            <button onclick="downloadConverted()" id="downloadBtn" style="display:none;">💾 Descargar CSV
+                ContaPyme</button>
+
+            <div class="format-info">
+                <h4>Lógica de Conversión:</h4>
+                <ul>
+                    <li><strong>ILABOR con valor:</strong> Se mapea al centro de costo correspondiente</li>
+                    <li><strong>ILABOR vacío:</strong> Se usa el centro de costo por defecto según el elemento</li>
+                    <li><strong>Centro de costo por defecto:</strong> 11212317001 (REVISTAS)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section" id="results" style="display:none;">
+            <h2>📊 Resultados del Procesamiento</h2>
+            <div id="processInfo"></div>
+            <div class="stats" id="stats"></div>
+        </div>
+
+        <div class="section" id="preview" style="display:none;">
+            <h2>👁️ Vista Previa (Primeros 20 registros)</h2>
+            <div class="preview-container">
+                <table id="previewTable"></table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let processedData = [];
+        let originalData = [];
+
+        // Mapeo de centros de costo por ILABOR
+        const centroCostoMap = {
+            'PERIODICOS': '11212317002',
+            'PULICOMERCIALES': '11212317003',
+            'REVISTAS': '11212317001',
+            'PLEGADIZAS': '11212317004'
+        };
+
+        // Mapeo por código de elemento (IRECURSO)
+        const elementoCentroCostoMap = {
+            '72312': '11212317005', // Material de Empaque
+            '54003': '11212317006', // Tintas
+            '62027': '11212317007', // Material Preprensa
+            '62028': '11212317007', // Material Preprensa
+            '62031': '11212317007'  // Material Preprensa
+        };
+
+        function obtenerCentroCosto(ilabor, irecurso) {
+            // Si ILABOR tiene valor, buscar en el mapeo
+            if (ilabor && ilabor.trim() !== '') {
+                const ilaborUpper = ilabor.trim().toUpperCase();
+                if (centroCostoMap[ilaborUpper]) {
+                    return centroCostoMap[ilaborUpper];
+                }
+            }
+
+            // Si ILABOR está vacío, usar centro de costo del elemento
+            if (irecurso && elementoCentroCostoMap[irecurso.toString()]) {
+                return elementoCentroCostoMap[irecurso.toString()];
+            }
+
+            // Centro de costo por defecto
+            return '11212317001';
+        }
+
+        async function processFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Por favor selecciona un archivo CSV');
+                return;
+            }
+
+            try {
+                const text = await file.text();
+                const lines = text.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim());
+
+                console.log('Headers encontrados:', headers);
+
+                originalData = [];
+                processedData = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue;
+
+                    const values = parseCSVLine(lines[i]);
+                    if (values.length === headers.length) {
+                        const rowData = {};
+                        headers.forEach((header, index) => {
+                            rowData[header] = values[index] || '';
+                        });
+                        originalData.push(rowData);
+
+                        // Procesar para ContaPyme
+                        const centroCosto = obtenerCentroCosto(rowData.ILABOR, rowData.IRECURSO);
+
+                        const processedRow = {
+                            IEMP: rowData.IEMP || '1',
+                            FSOPORT: rowData.FSOPORT || '',
+                            ITDSOP: rowData.ITDSOP || '160',
+                            INUMSOP: rowData.INUMSOP || '',
+                            INVENTARIO: rowData.INVENTARIO || '1',
+                            IRECURSO: rowData.IRECURSO || '',
+                            ICCSUBCC: centroCosto,
+                            ILABOR: '', // Siempre vacío en salida
+                            QCANTLUN: rowData.QCANTLUN || '',
+                            QCANTMAR: '', // Vacío
+                            QCANTMIE: '', // Vacío
+                            QCANTJUE: '', // Vacío
+                            QCANTVIE: '', // Vacío
+                            QCANTSAB: '', // Vacío
+                            QCANTDOM: '', // Vacío
+                            SOBSERVAC: rowData.SOBSERVAC || ''
+                        };
+
+                        processedData.push(processedRow);
+                    }
+                }
+
+                showResults();
+                showPreview();
+
+            } catch (error) {
+                console.error('Error procesando archivo:', error);
+                alert('Error al procesar el archivo: ' + error.message);
+            }
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        current += '"';
+                        i++; // Skip next quote
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+
+            result.push(current.trim());
+            return result;
+        }
+
+        function showResults() {
+            const resultsDiv = document.getElementById('results');
+            const processInfo = document.getElementById('processInfo');
+            const statsDiv = document.getElementById('stats');
+
+            // Calcular estadísticas
+            const totalRegistros = processedData.length;
+            const registrosSinIlabor = originalData.filter(row => !row.ILABOR || row.ILABOR.trim() === '').length;
+            const centrosCostoUsados = [...new Set(processedData.map(row => row.ICCSUBCC))];
+            const sumaCantidades = processedData.reduce((sum, row) => {
+                const cantidad = parseFloat(row.QCANTLUN) || 0;
+                return sum + cantidad;
+            }, 0);
+
+            // Distribución por centro de costo
+            const distribucion = {};
+            processedData.forEach(row => {
+                const cc = row.ICCSUBCC;
+                distribucion[cc] = (distribucion[cc] || 0) + 1;
+            });
+
+            processInfo.innerHTML = `
+                <div class="success">
+                    <h3>✅ Archivo procesado exitosamente</h3>
+                    <p>Se han convertido ${totalRegistros} registros del formato Ineditto al formato ContaPyme</p>
+                </div>
+            `;
+
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <h4>📝 Total Registros</h4>
+                    <div style="font-size: 2em; color: #007bff;">${totalRegistros}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>📭 Sin ILABOR</h4>
+                    <div style="font-size: 2em; color: #ffc107;">${registrosSinIlabor}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>🏢 Centros de Costo</h4>
+                    <div style="font-size: 2em; color: #28a745;">${centrosCostoUsados.length}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>📊 Suma Cantidades</h4>
+                    <div style="font-size: 1.5em; color: #17a2b8;">${sumaCantidades.toFixed(2)}</div>
+                </div>
+            `;
+
+            // Mostrar distribución
+            let distribucionHTML = '<h4>📈 Distribución por Centro de Costo:</h4><ul>';
+            Object.entries(distribucion).forEach(([cc, count]) => {
+                const nombreCC = {
+                    '11212317001': 'REVISTAS',
+                    '11212317002': 'PERIODICOS',
+                    '11212317003': 'PULICOMERCIALES',
+                    '11212317004': 'PLEGADIZAS',
+                    '11212317005': 'MATERIAL DE EMPAQUE',
+                    '11212317006': 'TINTAS',
+                    '11212317007': 'MATERIAL PREPRENSA'
+                }[cc] || 'DESCONOCIDO';
+
+                distribucionHTML += `<li><strong>${cc} (${nombreCC}):</strong> ${count} registros</li>`;
+            });
+            distribucionHTML += '</ul>';
+
+            statsDiv.innerHTML += `<div class="stat-card" style="grid-column: 1/-1;">${distribucionHTML}</div>`;
+
+            resultsDiv.style.display = 'block';
+            document.getElementById('downloadBtn').style.display = 'inline-block';
+        }
+
+        function showPreview() {
+            const previewDiv = document.getElementById('preview');
+            const table = document.getElementById('previewTable');
+
+            if (processedData.length === 0) return;
+
+            // Headers
+            const headers = Object.keys(processedData[0]);
+            let tableHTML = '<thead><tr>';
+            headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            // Datos (primeros 20)
+            processedData.slice(0, 20).forEach(row => {
+                tableHTML += '<tr>';
+                headers.forEach(header => {
+                    tableHTML += `<td>${row[header] || ''}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody>';
+            table.innerHTML = tableHTML;
+            previewDiv.style.display = 'block';
+        }
+
+        function downloadConverted() {
+            if (processedData.length === 0) {
+                alert('No hay datos procesados para descargar');
+                return;
+            }
+
+            const headers = Object.keys(processedData[0]);
+            let csvContent = headers.join(',') + '\n';
+
+            processedData.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header] || '';
+                    // Escapar comillas si es necesario
+                    if (value.toString().includes(',') || value.toString().includes('"')) {
+                        return `"${value.toString().replace(/"/g, '""')}"`;
+                    }
+                    return value;
+                });
+                csvContent += values.join(',') + '\n';
+            });
+
+            // Crear y descargar archivo
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', `contapyme_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Cargar archivo automáticamente si está disponible
+        window.addEventListener('load', function () {
+            // Simular carga del archivo de ejemplo si está disponible
+            if (window.fs && window.fs.readFile) {
+                loadExampleFile();
+            }
+        });
+
+        async function loadExampleFile() {
+            try {
+                const csvContent = await window.fs.readFile('Archivo ineditto.csv', { encoding: 'utf8' });
+
+                // Procesar el contenido directamente
+                const lines = csvContent.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim());
+
+                originalData = [];
+                processedData = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue;
+
+                    const values = parseCSVLine(lines[i]);
+                    if (values.length === headers.length) {
+                        const rowData = {};
+                        headers.forEach((header, index) => {
+                            rowData[header] = values[index] || '';
+                        });
+                        originalData.push(rowData);
+
+                        // Procesar para ContaPyme
+                        const centroCosto = obtenerCentroCosto(rowData.ILABOR, rowData.IRECURSO);
+
+                        const processedRow = {
+                            IEMP: rowData.IEMP || '1',
+                            FSOPORT: rowData.FSOPORT || '',
+                            ITDSOP: rowData.ITDSOP || '160',
+                            INUMSOP: rowData.INUMSOP || '',
+                            INVENTARIO: rowData.INVENTARIO || '1',
+                            IRECURSO: rowData.IRECURSO || '',
+                            ICCSUBCC: centroCosto,
+                            ILABOR: '', // Siempre vacío en salida
+                            QCANTLUN: rowData.QCANTLUN || '',
+                            QCANTMAR: '', // Vacío
+                            QCANTMIE: '', // Vacío
+                            QCANTJUE: '', // Vacío
+                            QCANTVIE: '', // Vacío
+                            QCANTSAB: '', // Vacío
+                            QCANTDOM: '', // Vacío
+                            SOBSERVAC: rowData.SOBSERVAC || ''
+                        };
+
+                        processedData.push(processedRow);
+                    }
+                }
+
+                showResults();
+                showPreview();
+
+                document.getElementById('processInfo').innerHTML += `
+                    <div class="info">
+                        <p>📁 Se ha cargado automáticamente el archivo de ejemplo "Archivo ineditto.csv"</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.log('No se pudo cargar el archivo de ejemplo:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>
