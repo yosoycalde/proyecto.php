@@ -7,13 +7,12 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once '../config/database.php';
 require_once 'functions.php';
 
-// Función para convertir Excel a CSV usando SimpleXLSX (librería ligera)
 function convertirExcelACSV($archivoExcel)
 {
     $fileExtension = strtolower(pathinfo($archivoExcel, PATHINFO_EXTENSION));
 
     if ($fileExtension === 'csv') {
-        return $archivoExcel; // Ya es CSV, no necesita conversión
+        return $archivoExcel; 
     }
 
     if ($fileExtension === 'xlsx') {
@@ -25,25 +24,20 @@ function convertirExcelACSV($archivoExcel)
     throw new Exception("Formato de archivo no soportado: $fileExtension");
 }
 
-// Convertir XLSX a CSV usando una implementación básica
 function convertirXLSXACSV($archivoXLSX)
 {
     try {
-        // Crear archivo CSV temporal
         $csvPath = pathinfo($archivoXLSX, PATHINFO_DIRNAME) . '/' .
             pathinfo($archivoXLSX, PATHINFO_FILENAME) . '_converted.csv';
 
-        // Leer el archivo XLSX usando ZipArchive (método básico)
         $zip = new ZipArchive();
         if ($zip->open($archivoXLSX) !== TRUE) {
             throw new Exception("No se pudo abrir el archivo XLSX");
         }
 
-        // Buscar el archivo de datos principales
         $sharedStrings = [];
         $worksheetData = '';
 
-        // Leer strings compartidas
         if (($sharedStringsXML = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
             $xml = simplexml_load_string($sharedStringsXML);
             foreach ($xml->si as $si) {
@@ -51,7 +45,6 @@ function convertirXLSXACSV($archivoXLSX)
             }
         }
 
-        // Leer la primera hoja de trabajo
         if (($worksheetXML = $zip->getFromName('xl/worksheets/sheet1.xml')) !== false) {
             $worksheetData = $worksheetXML;
         }
@@ -62,7 +55,6 @@ function convertirXLSXACSV($archivoXLSX)
             throw new Exception("No se pudo leer el contenido de la hoja de Excel");
         }
 
-        // Parsear XML y convertir a CSV
         $xml = simplexml_load_string($worksheetData);
         $csvFile = fopen($csvPath, 'w');
 
@@ -74,7 +66,6 @@ function convertirXLSXACSV($archivoXLSX)
             foreach ($row->c as $cell) {
                 $cellValue = '';
 
-                // Si es una referencia a string compartida
                 if (isset($cell['t']) && (string) $cell['t'] === 's') {
                     $stringIndex = (int) $cell->v;
                     if (isset($sharedStrings[$stringIndex])) {
@@ -101,18 +92,15 @@ function convertirXLSXACSV($archivoXLSX)
     }
 }
 
-// Convertir XLS a CSV (método básico - recomienda conversión manual)
 function convertirXLSACSV($archivoXLS)
 {
-    // Para archivos XLS antiguos, es más complejo sin librerías especializadas
-    // Se recomienda convertir manualmente o usar XLSX
     throw new Exception("Los archivos XLS requieren conversión manual a CSV o XLSX. Por favor, guarde el archivo como XLSX o CSV desde Excel.");
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
-        // MANEJAR IMPORTACIÓN DE CENTROS DE COSTOS
+
         if (isset($_POST['action']) && $_POST['action'] === 'import_centros' && isset($_FILES['configFile'])) {
 
             $uploadDir = '../uploads/';
@@ -122,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $file = $_FILES['configFile'];
 
-            // Validar tipo de archivo - ahora incluye Excel
+
             $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (!in_array($fileExtension, ['csv', 'xlsx', 'xls'])) {
                 throw new Exception('Solo se permiten archivos CSV, XLSX o XLS');
@@ -136,12 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             try {
-                // Convertir a CSV si es necesario
+
                 $csvPath = convertirExcelACSV($uploadPath);
 
                 $importados = importarCentrosCostos($csvPath);
 
-                // Limpiar archivos temporales
+
                 if (file_exists($uploadPath) && $uploadPath !== $csvPath) {
                     unlink($uploadPath);
                 }
@@ -154,9 +142,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'records' => $importados,
                     'message' => "Centros de costos importados correctamente desde archivo {$fileExtension}"
                 ]);
-                exit; // Movido aquí para estar dentro del try correcto
+                exit; 
             } catch (Exception $e) {
-                // Limpiar archivo en caso de error
                 if (file_exists($uploadPath)) {
                     unlink($uploadPath);
                 }
@@ -164,7 +151,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // MANEJAR IMPORTACIÓN DE ELEMENTOS
         if (isset($_POST['action']) && $_POST['action'] === 'import_elementos' && isset($_FILES['configFile'])) {
 
             $uploadDir = '../uploads/';
@@ -174,7 +160,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $file = $_FILES['configFile'];
 
-            // Validar tipo de archivo - ahora incluye Excel
             $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (!in_array($fileExtension, ['csv', 'xlsx', 'xls'])) {
                 throw new Exception('Solo se permiten archivos CSV, XLSX o XLS');
@@ -188,12 +173,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             try {
-                // Convertir a CSV si es necesario
                 $csvPath = convertirExcelACSV($uploadPath);
 
                 $importados = importarElementos($csvPath);
 
-                // Limpiar archivos temporales
                 if (file_exists($uploadPath) && $uploadPath !== $csvPath) {
                     unlink($uploadPath);
                 }
@@ -237,21 +220,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             try {
-                // converir a CSV si esta en otro tipo de archivo
                 $csvPath = convertirExcelACSV($uploadPath);
 
-                // Proceso de inventario ineditto
                 $records = procesarInventarioIneditto($csvPath);
 
-                // Limpiar archivos temporales
                 if (file_exists($uploadPath) && $uploadPath !== $csvPath) {
                     unlink($uploadPath);
                 }
                 if ($csvPath !== $uploadPath && file_exists($csvPath)) {
                     unlink($csvPath);
                 }
-
-                // Obtener estadísticas del procesamiento
                 $stats = obtenerEstadisticasTablaTemp();
 
                 echo json_encode([
@@ -260,9 +238,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'statistics' => $stats,
                     'message' => "Archivo de inventario {$fileExtension} procesado correctamente"
                 ]);
-                exit; // Movido aquí para estar dentro del try correcto
+                exit;
             } catch (Exception $e) {
-                // Limpiar archivo en caso de error
                 if (file_exists($uploadPath)) {
                     unlink($uploadPath);
                 }
@@ -270,11 +247,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Si llegamos aquí, no se encontró una acción válida
         throw new Exception('No se encontró una acción válida o archivo requerido');
 
     } catch (Exception $e) {
-        // Limpiar archivos en caso de error
         if (isset($uploadPath) && file_exists($uploadPath)) {
             unlink($uploadPath);
         }
