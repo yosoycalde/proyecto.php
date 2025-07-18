@@ -522,7 +522,8 @@ function importarElementos($archivo_csv)
 
         fclose($handle);
 
-        // Limpiar archivo temporal si se creó
+        // Si se creo archivo temporal con el if llamara la varible (Loguica para eliminar los archivos 
+        //subidos a la carpeta UPLOADS)
         if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -530,7 +531,7 @@ function importarElementos($archivo_csv)
         return $importados;
 
     } catch (Exception $e) {
-        // Limpiar archivo temporal en caso de error
+        // Se liempiara archivos uploads si salta un error 
         if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -539,7 +540,7 @@ function importarElementos($archivo_csv)
 }
 
 /**
- * Obtiene estadísticas de la tabla temporal
+ * Obtiene estadisticas de la tabla temporal 
  */
 function obtenerEstadisticasTablaTemp()
 {
