@@ -264,13 +264,11 @@ function procesarInventarioIneditto($archivo_csv)
             throw new Exception("No se pudo abrir el archivo");
         }
 
-        // Leer headers
         $headers = fgetcsv($handle, 1000, ",");
         if ($headers === FALSE) {
             throw new Exception("No se pudieron leer los headers del archivo");
         }
 
-        // Limpiar headers de espacios en blanco y BOM
         $headers = array_map(function ($header) {
             return trim(str_replace("\xEF\xBB\xBF", '', $header));
         }, $headers);
@@ -280,7 +278,7 @@ function procesarInventarioIneditto($archivo_csv)
             $lineNumber++;
 
             if (empty(array_filter($row))) {
-                continue; // Saltar líneas vacías
+                continue;
             }
 
             if (count($row) === count($headers)) {
@@ -291,7 +289,6 @@ function procesarInventarioIneditto($archivo_csv)
         }
         fclose($handle);
 
-        // Limpiar archivo temporal si se creó
         if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -359,9 +356,6 @@ function procesarInventarioIneditto($archivo_csv)
     }
 }
 
-/**
- * Importa centros de costos desde CSV o Excel
- */
 function importarCentrosCostos($archivo_csv)
 {
     $database = new Database();
