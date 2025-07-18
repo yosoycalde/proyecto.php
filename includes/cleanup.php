@@ -7,7 +7,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once '../config/database.php';
 
 /**
- * Función para limpiar archivos temporales del directorio uploads
+ * liempieza de archivos temporales 
  */
 function limpiarArchivosTemporales() {
     $uploadDir = '../uploads/';
