@@ -82,13 +82,11 @@ function convertirXLSXACSVNativo($archivoXLSX)
             throw new Exception("No se pudo crear el archivo CSV temporal");
         }
 
-        // Procesar filas
         if (isset($xml->sheetData->row)) {
             foreach ($xml->sheetData->row as $row) {
                 $rowData = [];
                 $maxCol = 0;
 
-                // Primero, determinar el número máximo de columnas
                 foreach ($row->c as $cell) {
                     $cellRef = (string) $cell['r'];
                     $colNum = obtenerNumeroColumna($cellRef);
@@ -97,19 +95,16 @@ function convertirXLSXACSVNativo($archivoXLSX)
                     }
                 }
 
-                // Inicializar array con celdas vacías
                 for ($i = 0; $i <= $maxCol; $i++) {
                     $rowData[$i] = '';
                 }
 
-                // Llenar datos de celdas
                 foreach ($row->c as $cell) {
                     $cellRef = (string) $cell['r'];
                     $colNum = obtenerNumeroColumna($cellRef);
                     $cellValue = '';
 
                     if (isset($cell['t']) && (string) $cell['t'] === 's') {
-                        // Referencia a string compartida
                         $stringIndex = (int) $cell->v;
                         if (isset($sharedStrings[$stringIndex])) {
                             $cellValue = $sharedStrings[$stringIndex];
@@ -121,7 +116,6 @@ function convertirXLSXACSVNativo($archivoXLSX)
                     $rowData[$colNum] = $cellValue;
                 }
 
-                // Quitar las celdas finales 
                 $rowData = array_values($rowData);
                 while (count($rowData) > 0 && end($rowData) === '') {
                     array_pop($rowData);
@@ -147,9 +141,6 @@ function convertirXLSXACSVNativo($archivoXLSX)
     }
 }
 
-/**
- * Obtener número de columna desde referencia de celda (ej: A1 -> 0, B1 -> 1)
- */
 function obtenerNumeroColumna($cellRef)
 {
     $col = preg_replace('/[0-9]+/', '', $cellRef);
@@ -160,7 +151,7 @@ function obtenerNumeroColumna($cellRef)
         $colNum = $colNum * 26 + (ord($col[$i]) - ord('A') + 1);
     }
 
-    return $colNum - 1; // Convertir a índice base 0
+    return $colNum - 1;
 }
 
 function obtenerCentroCosto($ilabor, $codigo_elemento)
@@ -168,7 +159,6 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
     $database = new Database();
     $conn = $database->connect();
 
-    // Mapeo directo por ILABOR (primera prioridad)
     $mapeoIlabor = [
         'PERIODICOS' => '11212317002',
         'PULICOMERCIALES' => '11212317003',
@@ -182,7 +172,6 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
             return $mapeoIlabor[$ilaborUpper];
         }
 
-        // Si no está en el mapeo directo, buscar en la base de datos
         try {
             $query = "SELECT codigo FROM centros_costos WHERE UPPER(nombre) LIKE UPPER(:ilabor)";
             $stmt = $conn->prepare($query);
@@ -233,16 +222,12 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
     return '11212317001'; // REVISTAS
 }
 
-/**
- * Procesa el archivo CSV de inventario de Ineditto (ahora compatible con Excel)
- */
 function procesarInventarioIneditto($archivo_csv)
 {
     $database = new Database();
     $conn = $database->connect();
 
     try {
-        // Limpiar tabla temporal
         $conn->exec("DELETE FROM inventarios_temp");
 
         // Verificar si es Excel y convertir si es necesario
@@ -415,7 +400,6 @@ function importarCentrosCostos($archivo_csv)
 
         fclose($handle);
 
-        // Limpiar archivo temporal si se creó
         if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -423,7 +407,6 @@ function importarCentrosCostos($archivo_csv)
         return $importados;
 
     } catch (Exception $e) {
-        // Limpiar archivo temporal en caso de error
         if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -431,16 +414,12 @@ function importarCentrosCostos($archivo_csv)
     }
 }
 
-/**
- * Importa elementos desde CSV o Excel
- */
 function importarElementos($archivo_csv)
 {
     $database = new Database();
     $conn = $database->connect();
 
     try {
-        // Verificar si es Excel y convertir si es necesario
         $fileExtension = strtolower(pathinfo($archivo_csv, PATHINFO_EXTENSION));
         $archivoAProcesar = $archivo_csv;
 
@@ -460,7 +439,6 @@ function importarElementos($archivo_csv)
             throw new Exception("No se pudieron leer los headers del archivo");
         }
 
-        // Limpiar headers
         $headers = array_map(function ($header) {
             return trim(str_replace("\xEF\xBB\xBF", '', $header));
         }, $headers);
