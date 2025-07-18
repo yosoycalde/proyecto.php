@@ -154,6 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'records' => $importados,
                     'message' => "Centros de costos importados correctamente desde archivo {$fileExtension}"
                 ]);
+                exit; // Movido aquí para estar dentro del try correcto
             } catch (Exception $e) {
                 // Limpiar archivo en caso de error
                 if (file_exists($uploadPath)) {
@@ -161,7 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 throw $e;
             }
-            exit;
         }
 
         // MANEJAR IMPORTACIÓN DE ELEMENTOS
@@ -206,6 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'records' => $importados,
                     'message' => "Elementos importados correctamente desde archivo {$fileExtension}"
                 ]);
+                exit; // Movido aquí para estar dentro del try correcto
             } catch (Exception $e) {
                 // Limpiar archivo en caso de error
                 if (file_exists($uploadPath)) {
@@ -213,7 +214,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 throw $e;
             }
-            exit;
         }
 
         // MANEJAR PROCESAMIENTO DE INVENTARIO INEDITTO
@@ -263,6 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'statistics' => $stats,
                     'message' => "Archivo de inventario {$fileExtension} procesado correctamente"
                 ]);
+                exit; // Movido aquí para estar dentro del try correcto
             } catch (Exception $e) {
                 // Limpiar archivo en caso de error
                 if (file_exists($uploadPath)) {
@@ -270,7 +271,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 throw $e;
             }
-            exit;
         }
 
         // Si llegamos aquí, no se encontró una acción válida
