@@ -28,7 +28,6 @@ function limpiarArchivosTemporales() {
         
         // Verificar si es un archivo y no un directorio
         if (is_file($rutaArchivo)) {
-            // Eliminar archivos que contengan timestamps (archivos temporales generados por el sistema)
             if (preg_match('/^\d+_/', $archivo)) {
                 if (unlink($rutaArchivo)) {
                     $archivosEliminados++;
@@ -41,7 +40,7 @@ function limpiarArchivosTemporales() {
 }
 
 /**
- * Función para limpiar tabla temporal
+ * limpiar tabla temporal
  */
 function limpiarTablaTemporalInventarios() {
     try {
