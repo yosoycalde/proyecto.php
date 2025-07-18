@@ -1,15 +1,11 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
-/**
- * Obtiene el centro de costo según la lógica del negocio
- */
 function obtenerCentroCosto($ilabor, $codigo_elemento)
 {
     $database = new Database();
     $conn = $database->connect();
 
-    // Mapeo directo por ILABOR (primera prioridad)
     $mapeoIlabor = [
         'PERIODICOS' => '11212317002',
         'PULICOMERCIALES' => '11212317003', 

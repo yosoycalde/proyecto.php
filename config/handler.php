@@ -191,7 +191,6 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         return $mapeoElemento[$codigo_elemento];
     }
 
-    // Si hay código de elemento, buscar en la base de datos
     if (!empty($codigo_elemento)) {
         try {
             $query = "SELECT centro_costo_1 FROM elementos WHERE codigo = :codigo_elemento";
@@ -280,7 +279,6 @@ function procesarInventarioIneditto($archivo_csv)
         $stmt = $conn->prepare($query);
         $procesados = 0;
 
-        // Procesar cada fila
         foreach ($datos as $index => $fila) {
             try {
                 $centro_costo = obtenerCentroCosto(
