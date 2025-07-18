@@ -206,9 +206,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'records' => $importados,
                     'message' => "Elementos importados correctamente desde archivo {$fileExtension}"
                 ]);
-                exit; // Movido aquí para estar dentro del try correcto
+                exit;
             } catch (Exception $e) {
-                // Limpiar archivo en caso de error
                 if (file_exists($uploadPath)) {
                     unlink($uploadPath);
                 }
@@ -216,7 +215,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // MANEJAR PROCESAMIENTO DE INVENTARIO INEDITTO
         if (isset($_FILES['csvFile'])) {
 
             $uploadDir = '../uploads/';
@@ -226,7 +224,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $file = $_FILES['csvFile'];
 
-            // Validar tipo de archivo - ahora también acepta Excel para inventarios
             $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (!in_array($fileExtension, ['csv', 'xlsx', 'xls'])) {
                 throw new Exception('Solo se permiten archivos CSV, XLSX o XLS para el inventario');
@@ -240,10 +237,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             try {
-                // Convertir a CSV si es necesario
+                // converir a CSV si esta en otro tipo de archivo
                 $csvPath = convertirExcelACSV($uploadPath);
 
-                // Procesar el inventario
+                // Proceso de inventario ineditto
                 $records = procesarInventarioIneditto($csvPath);
 
                 // Limpiar archivos temporales
