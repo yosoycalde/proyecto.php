@@ -57,9 +57,6 @@ function verificarEstadoLimpieza()
     }
 }
 
-/**
- * Realizar limpieza forzada
- */
 function realizarLimpiezaForzada()
 {
     try {
