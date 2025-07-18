@@ -35,14 +35,11 @@ try {
         throw new Exception("No se encontraron datos para procesar");
     }
 
-    // Generar el contenido CSV en memoria
     ob_start();
     $csvOutput = fopen('php://output', 'w');
 
-    // BOM para UTF-8 (opcional, para Excel)
     fprintf($csvOutput, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-    // Headers del CSV según formato ContaPyme
     $headers = [
         'IEMP',
         'FSOPORT',
@@ -64,7 +61,6 @@ try {
 
     fputcsv($csvOutput, $headers);
 
-    // Datos con la lógica correcta según los requisitos
     foreach ($resultados as $row) {
         $csvRow = [
             $row['IEMP'] ?? '',
@@ -73,15 +69,15 @@ try {
             $row['INUMSOP'] ?? '',
             $row['INVENTARIO'] ?? '',
             $row['IRECURSO'] ?? '',
-            $row['ICCSUBCC'] ?? '', // Centro de costo calculado
-            '', // ILABOR siempre vacío en la salida según especificación
+            $row['ICCSUBCC'] ?? '',
+            '',
             $row['QCANTLUN'] ?? '',
             '',
             '',
             '',
             '',
             '',
-            '', // Días de la semana vacíos
+            '',
             $row['SOBSERVAC'] ?? ''
         ];
 
@@ -92,8 +88,6 @@ try {
     $csvContent = ob_get_contents();
     ob_end_clean();
 
-    // *** REALIZAR LIMPIEZA INMEDIATA ANTES DE LA DESCARGA ***
-    // Limpiar tabla temporal
     try {
         $deleteQuery = "DELETE FROM inventarios_temp";
         $deleteStmt = $conn->prepare($deleteQuery);
@@ -104,7 +98,7 @@ try {
         $registrosEliminados = 0;
     }
 
-    // Limpiar archivos temporales
+    // Limpiar archivos temporales de la carperta uploads
     $archivosEliminados = 0;
     $uploadDir = '../uploads/';
     if (is_dir($uploadDir)) {
@@ -122,7 +116,6 @@ try {
         }
     }
 
-    // Log de la limpieza
     error_log("Limpieza realizada antes de descarga: $archivosEliminados archivos eliminados, $registrosEliminados registros eliminados");
 
     // Ahora enviar el archivo para descarga
