@@ -181,12 +181,12 @@ try {
 
     <body>
         <div class="error-container">
-            <h2>❌ Error al generar archivo</h2>
+            <h2> Error al generar archivo</h2>
             <p><?php echo htmlspecialchars($e->getMessage()); ?></p>
-            <a href="../index.php" class="back-btn">🔙 Volver al inicio</a>
+            <a href="../index.php" class="back-btn"> Volver al inicio</a>
 
             <div class="cleanup-info">
-                <h4>🧹 Limpieza automática</h4>
+                <h4> Limpieza automática</h4>
                 <p>Si había datos procesados, puede realizar una limpieza manual desde el panel principal.</p>
             </div>
         </div>
@@ -198,7 +198,7 @@ try {
                 }).then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            console.log('✅ Limpieza automática completada');
+                            console.log(' Limpieza automática completada');
                         }
                     }).catch(error => {
                         console.log('Error en limpieza automática:', error);

@@ -5,22 +5,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const downloadBtn = document.getElementById('downloadBtn');
     const configFile = document.getElementById('configFile');
 
-    // Botones de configuración
     const importCentrosBtn = document.getElementById('importCentrosBtn');
     const importElementosBtn = document.getElementById('importElementosBtn');
 
-    // Crear botón de limpieza
     const actionButtons = document.querySelector('.action-buttons');
     if (actionButtons) {
         const cleanupBtn = document.createElement('button');
         cleanupBtn.id = 'cleanupBtn';
-        cleanupBtn.innerHTML = '🧹 Limpiar Archivos y Datos';
+        cleanupBtn.innerHTML = ' Limpiar Archivos y Datos';
         cleanupBtn.className = 'config-btn';
         cleanupBtn.style.display = 'none';
         cleanupBtn.style.marginLeft = '15px';
         actionButtons.appendChild(cleanupBtn);
 
-        // Event listener para limpieza manual
         cleanupBtn.addEventListener('click', function () {
             if (confirm('¿Está seguro de que desea eliminar todos los archivos temporales y datos procesados?')) {
                 realizarLimpiezaManual();
@@ -28,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Manejar importación de centros de costos
     importCentrosBtn.addEventListener('click', function () {
         configFile.accept = '.csv,.xlsx,.xls';
         configFile.onchange = function () {
@@ -53,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
         configFile.click();
     });
 
-    // Manejar importación de elementos
     importElementosBtn.addEventListener('click', function () {
         configFile.accept = '.csv,.xlsx,.xls';
         configFile.onchange = function () {
@@ -94,18 +89,17 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showMessage(`✅ ${data.message} (${data.records} registros)`, 'success');
+                    showMessage(` ${data.message} (${data.records} registros)`, 'success');
                 } else {
-                    showMessage(`❌ Error al importar ${tipo}: ${data.message}`, 'error');
+                    showMessage(` Error al importar ${tipo}: ${data.message}`, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showMessage(`❌ Error de conexión al importar ${tipo}`, 'error');
+                showMessage(` Error de conexión al importar ${tipo}`, 'error');
             });
     }
 
-    // Procesar inventario de Ineditto
     uploadForm.addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -134,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('csvFile', file);
 
         const processInfo = document.getElementById('processInfo');
-        processInfo.innerHTML = `<p class="info">🔄 Procesando archivo ${fileExt.toUpperCase()} de inventario...</p>`;
+        processInfo.innerHTML = `<p class="info"> Procesando archivo ${fileExt.toUpperCase()} de inventario...</p>`;
         resultsSection.style.display = 'block';
 
         fetch('includes/upload_handler.php', {
@@ -147,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const stats = data.statistics;
                     processInfo.innerHTML = `
                     <div class="success">
-                        <h3>✅ ${data.message}</h3>
+                        <h3> ${data.message}</h3>
                         <div class="stats-grid">
                             <div class="stat-item">
                                 <strong>Registros procesados:</strong> ${data.records}
@@ -166,13 +160,13 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                         </div>
                         <div class="info" style="margin-top: 15px;">
-                            <p>💡 <strong>Importante:</strong> Después de descargar el archivo CSV, todos los archivos temporales y datos procesados se eliminarán automáticamente del servidor.</p>
+                            <p> <strong>Importante:</strong> Después de descargar el archivo CSV, todos los archivos temporales y datos procesados se eliminarán automáticamente del servidor.</p>
                         </div>
                     </div>`;
 
                     downloadBtn.style.display = 'inline-block';
 
-                    // Mostrar botón de limpieza manual
+                    // boton de limpieza manual
                     const cleanupBtn = document.getElementById('cleanupBtn');
                     if (cleanupBtn) {
                         cleanupBtn.style.display = 'inline-block';
@@ -180,30 +174,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     mostrarVistPrevia();
                 } else {
-                    processInfo.innerHTML = `<p class="error">❌ Error: ${data.message}</p>`;
+                    processInfo.innerHTML = `<p class="error"> Error: ${data.message}</p>`;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                processInfo.innerHTML = '<p class="error">❌ Error al procesar el archivo</p>';
+                processInfo.innerHTML = '<p class="error"> Error al procesar el archivo</p>';
             });
     });
 
     downloadBtn.addEventListener('click', function () {
-        showMessage('📥 Iniciando descarga y limpieza automática...', 'info');
+        showMessage(' Iniciando descarga y limpieza automática...', 'info');
 
-        // Crear iframe oculto para la descarga
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = 'includes/download_csv.php';
         document.body.appendChild(iframe);
 
-        // Verificar que la limpieza se realizó correctamente después de la descarga
         setTimeout(() => {
             verificarLimpiezaCompletada();
         }, 2000);
 
-        // Limpiar el iframe después de un tiempo
         setTimeout(() => {
             if (iframe.parentNode) {
                 iframe.parentNode.removeChild(iframe);
@@ -212,52 +203,44 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function verificarLimpiezaCompletada() {
-        // Verificar si aún hay datos en la vista previa
         fetch('includes/get_preview.php')
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.statistics.total_registros === 0) {
-                    // Limpieza exitosa
-                    showMessage('✅ Descarga y limpieza completadas exitosamente', 'success');
+                    showMessage(' Descarga y limpieza completadas exitosamente', 'success');
                     resetearInterfaz();
                 } else if (data.success && data.statistics.total_registros > 0) {
-                    // Aún hay datos, forzar limpieza
-                    showMessage('🔄 Completando limpieza...', 'info');
+                    showMessage(' Completando limpieza...', 'info');
                     setTimeout(() => {
                         realizarLimpiezaManual();
                     }, 1000);
                 } else {
-                    // Error en la verificación, asumir que se limpió
-                    showMessage('✅ Descarga completada', 'success');
+                    showMessage(' Descarga completada', 'success');
                     resetearInterfaz();
                 }
             })
             .catch(error => {
                 console.error('Error verificando limpieza:', error);
-                // En caso de error, asumir que se limpió
-                showMessage('✅ Descarga completada', 'success');
+                showMessage(' Descarga completada', 'success');
                 resetearInterfaz();
             });
     }
 
     function resetearInterfaz() {
-        // Ocultar botones y secciones
         downloadBtn.style.display = 'none';
         const cleanupBtn = document.getElementById('cleanupBtn');
         if (cleanupBtn) {
             cleanupBtn.style.display = 'none';
         }
 
-        // Ocultar secciones de resultados
         resultsSection.style.display = 'none';
         previewSection.style.display = 'none';
 
-        // Resetear el formulario
         document.getElementById('csvFile').value = '';
     }
 
     function realizarLimpiezaManual() {
-        showMessage('🧹 Realizando limpieza manual...', 'info');
+        showMessage(' Realizando limpieza manual...', 'info');
 
         fetch('includes/cleanup.php', {
             method: 'POST'
@@ -265,15 +248,15 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showMessage(`✅ Limpieza completada: ${data.archivos_eliminados} archivos y ${data.registros_eliminados} registros eliminados`, 'success');
+                    showMessage(` Limpieza completada: ${data.archivos_eliminados} archivos y ${data.registros_eliminados} registros eliminados`, 'success');
                     resetearInterfaz();
                 } else {
-                    showMessage(`❌ Error en la limpieza: ${data.message}`, 'error');
+                    showMessage(` Error en la limpieza: ${data.message}`, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showMessage('❌ Error de conexión durante la limpieza', 'error');
+                showMessage(' Error de conexión durante la limpieza', 'error');
             });
     }
 
@@ -309,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.distribucion_centros_costo) {
                         const distribucionDiv = document.getElementById('distribucion');
                         if (distribucionDiv) {
-                            let distribucionHTML = '<h4>📊 Distribución por Centro de Costo:</h4><ul>';
+                            let distribucionHTML = '<h4> Distribución por Centro de Costo:</h4><ul>';
                             data.distribucion_centros_costo.forEach(item => {
                                 distribucionHTML += `<li><strong>${item.centro_costo_asignado}:</strong> ${item.cantidad_registros} registros</li>`;
                             });
@@ -373,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 6000);
     }
 
-    // Actualizar el input de archivo principal para aceptar Excel
+
     const csvFileInput = document.getElementById('csvFile');
     if (csvFileInput) {
         csvFileInput.accept = '.csv,.xlsx,.xls';

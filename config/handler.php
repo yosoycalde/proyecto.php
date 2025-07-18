@@ -330,7 +330,6 @@ function importarCentrosCostos($archivo_csv)
     $conn = $database->connect();
 
     try {
-        // Verificar si es Excel y convertir si es necesario
         $fileExtension = strtolower(pathinfo($archivo_csv, PATHINFO_EXTENSION));
         $archivoAProcesar = $archivo_csv;
 
