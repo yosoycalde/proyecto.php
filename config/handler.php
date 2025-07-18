@@ -1,30 +1,24 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
-/**
- * Función para convertir Excel a CSV usando método nativo PHP
- */
 function convertirExcelACSVNativo($archivoExcel)
 {
     $fileExtension = strtolower(pathinfo($archivoExcel, PATHINFO_EXTENSION));
 
     if ($fileExtension === 'csv') {
-        return $archivoExcel; // Ya es CSV, no necesita conversión
+        return $archivoExcel;
     }
 
     if ($fileExtension === 'xlsx') {
         return convertirXLSXACSVNativo($archivoExcel);
     } elseif ($fileExtension === 'xls') {
-        // Para XLS, recomendamos conversión manual
         throw new Exception("Archivos XLS no soportados directamente. Por favor, convierta a XLSX o CSV desde Excel.");
     }
 
     throw new Exception("Formato de archivo no soportado: $fileExtension");
 }
 
-/**
- * Convertir XLSX a CSV 
- */
+
 function convertirXLSXACSVNativo($archivoXLSX)
 {
     if (!class_exists('ZipArchive')) {
@@ -42,7 +36,6 @@ function convertirXLSXACSVNativo($archivoXLSX)
             throw new Exception("No se pudo abrir el archivo XLSX. Código de error: $result");
         }
 
-        // Leer strings compartidas
         $sharedStrings = [];
         if (($sharedStringsXML = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
             $xml = simplexml_load_string($sharedStringsXML);
@@ -51,7 +44,6 @@ function convertirXLSXACSVNativo($archivoXLSX)
                     if (isset($si->t)) {
                         $sharedStrings[] = (string) $si->t;
                     } elseif (isset($si->r)) {
-                        // Texto enriquecido
                         $text = '';
                         foreach ($si->r as $r) {
                             if (isset($r->t)) {
@@ -64,7 +56,6 @@ function convertirXLSXACSVNativo($archivoXLSX)
             }
         }
 
-        // Leer la primera hoja de trabajo
         $worksheetXML = $zip->getFromName('xl/worksheets/sheet1.xml');
         if ($worksheetXML === false) {
             throw new Exception("No se pudo leer la hoja de trabajo del archivo XLSX");
@@ -188,13 +179,12 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         }
     }
 
-    // Mapeo por código de elemento (segunda prioridad)
     $mapeoElemento = [
-        '72312' => '11212317005', // Material de Empaque
-        '54003' => '11212317006', // Tintas
-        '62027' => '11212317007', // Material Preprensa
-        '62028' => '11212317007', // Material Preprensa
-        '62031' => '11212317007'  // Material Preprensa
+        '72312' => '11212317005',
+        '54003' => '11212317006', 
+        '62027' => '11212317007', 
+        '62028' => '11212317007', 
+        '62031' => '11212317007'  
     ];
 
     if (!empty($codigo_elemento) && isset($mapeoElemento[$codigo_elemento])) {
@@ -218,8 +208,7 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         }
     }
 
-    // Centro de costo por defecto
-    return '11212317001'; // REVISTAS
+    return '11212317001'; 
 }
 
 function procesarInventarioIneditto($archivo_csv)
@@ -500,8 +489,6 @@ function importarElementos($archivo_csv)
 
         fclose($handle);
 
-        // Si se creo archivo temporal con el if llamara la varible (Loguica para eliminar los archivos 
-        //subidos a la carpeta UPLOADS)
         if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -509,7 +496,6 @@ function importarElementos($archivo_csv)
         return $importados;
 
     } catch (Exception $e) {
-        // Se liempiara archivos uploads si salta un error 
         if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -517,9 +503,6 @@ function importarElementos($archivo_csv)
     }
 }
 
-/**
- * Obtiene estadisticas de la tabla temporal 
- */
 function obtenerEstadisticasTablaTemp()
 {
     $database = new Database();
