@@ -23,7 +23,7 @@ function convertirExcelACSVNativo($archivoExcel)
 }
 
 /**
- * Convertir XLSX a CSV usando ZipArchive y SimpleXML
+ * Convertir XLSX a CSV 
  */
 function convertirXLSXACSVNativo($archivoXLSX)
 {
@@ -72,7 +72,6 @@ function convertirXLSXACSVNativo($archivoXLSX)
 
         $zip->close();
 
-        // Parsear XML de la hoja de trabajo
         $xml = simplexml_load_string($worksheetXML);
         if ($xml === false) {
             throw new Exception("No se pudo parsear el contenido XML de la hoja de trabajo");
@@ -122,13 +121,12 @@ function convertirXLSXACSVNativo($archivoXLSX)
                     $rowData[$colNum] = $cellValue;
                 }
 
-                // Remover celdas vacías del final
+                // Quitar las celdas finales 
                 $rowData = array_values($rowData);
                 while (count($rowData) > 0 && end($rowData) === '') {
                     array_pop($rowData);
                 }
 
-                // Escribir fila si no está completamente vacía
                 if (!empty($rowData) && !empty(array_filter($rowData))) {
                     fputcsv($csvFile, $rowData);
                 }
@@ -165,9 +163,6 @@ function obtenerNumeroColumna($cellRef)
     return $colNum - 1; // Convertir a índice base 0
 }
 
-/**
- * Obtiene el centro de costo según la lógica del negocio
- */
 function obtenerCentroCosto($ilabor, $codigo_elemento)
 {
     $database = new Database();
@@ -181,7 +176,6 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         'PLEGADIZAS' => '11212317004'
     ];
 
-    // Si ILABOR no está vacío, buscar en el mapeo directo
     if (!empty(trim($ilabor))) {
         $ilaborUpper = strtoupper(trim($ilabor));
         if (isset($mapeoIlabor[$ilaborUpper])) {
