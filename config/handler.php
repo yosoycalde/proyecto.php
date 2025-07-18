@@ -208,7 +208,7 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         }
     }
 
-    return '11212317001'; 
+    return '1121231700'; 
 }
 
 function procesarInventarioIneditto($archivo_csv)
