@@ -190,35 +190,71 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     downloadBtn.addEventListener('click', function () {
-        showMessage('📥 Iniciando descarga... Los archivos se limpiarán automáticamente después de la descarga.', 'info');
+        showMessage('📥 Iniciando descarga y limpieza automática...', 'info');
 
-        // Crear un enlace temporal para la descarga
-        const link = document.createElement('a');
-        link.href = 'includes/download_csv.php';
-        link.download = 'contapyme_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Crear iframe oculto para la descarga
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'includes/download_csv.php';
+        document.body.appendChild(iframe);
 
-        // Ocultar botones después de unos segundos (cuando la descarga debería haber comenzado)
+        // Verificar que la limpieza se realizó correctamente después de la descarga
         setTimeout(() => {
-            downloadBtn.style.display = 'none';
-            const cleanupBtn = document.getElementById('cleanupBtn');
-            if (cleanupBtn) {
-                cleanupBtn.style.display = 'none';
+            verificarLimpiezaCompletada();
+        }, 2000);
+
+        // Limpiar el iframe después de un tiempo
+        setTimeout(() => {
+            if (iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
             }
-
-            // Limpiar secciones de resultados
-            resultsSection.style.display = 'none';
-            previewSection.style.display = 'none';
-
-            showMessage('✅ Descarga completada. Archivos temporales eliminados automáticamente.', 'success');
-
-            // Resetear el formulario
-            document.getElementById('csvFile').value = '';
-
-        }, 3000);
+        }, 5000);
     });
+
+    function verificarLimpiezaCompletada() {
+        // Verificar si aún hay datos en la vista previa
+        fetch('includes/get_preview.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.statistics.total_registros === 0) {
+                    // Limpieza exitosa
+                    showMessage('✅ Descarga y limpieza completadas exitosamente', 'success');
+                    resetearInterfaz();
+                } else if (data.success && data.statistics.total_registros > 0) {
+                    // Aún hay datos, forzar limpieza
+                    showMessage('🔄 Completando limpieza...', 'info');
+                    setTimeout(() => {
+                        realizarLimpiezaManual();
+                    }, 1000);
+                } else {
+                    // Error en la verificación, asumir que se limpió
+                    showMessage('✅ Descarga completada', 'success');
+                    resetearInterfaz();
+                }
+            })
+            .catch(error => {
+                console.error('Error verificando limpieza:', error);
+                // En caso de error, asumir que se limpió
+                showMessage('✅ Descarga completada', 'success');
+                resetearInterfaz();
+            });
+    }
+
+    function resetearInterfaz() {
+        // Ocultar botones y secciones
+        downloadBtn.style.display = 'none';
+        const cleanupBtn = document.getElementById('cleanupBtn');
+        if (cleanupBtn) {
+            cleanupBtn.style.display = 'none';
+        }
+
+        // Ocultar secciones de resultados
+        resultsSection.style.display = 'none';
+        previewSection.style.display = 'none';
+
+        // Resetear el formulario
+        document.getElementById('csvFile').value = '';
+    }
 
     function realizarLimpiezaManual() {
         showMessage('🧹 Realizando limpieza manual...', 'info');
@@ -230,19 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.success) {
                     showMessage(`✅ Limpieza completada: ${data.archivos_eliminados} archivos y ${data.registros_eliminados} registros eliminados`, 'success');
-
-                    // Ocultar secciones y resetear interfaz
-                    resultsSection.style.display = 'none';
-                    previewSection.style.display = 'none';
-                    downloadBtn.style.display = 'none';
-                    const cleanupBtn = document.getElementById('cleanupBtn');
-                    if (cleanupBtn) {
-                        cleanupBtn.style.display = 'none';
-                    }
-
-                    // Resetear formulario
-                    document.getElementById('csvFile').value = '';
-
+                    resetearInterfaz();
                 } else {
                     showMessage(`❌ Error en la limpieza: ${data.message}`, 'error');
                 }
