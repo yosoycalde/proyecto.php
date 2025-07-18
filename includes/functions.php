@@ -235,7 +235,6 @@ function importarElementos($archivo_csv)
         throw new Exception("No se pudieron leer los headers del archivo");
     }
 
-    // Limpiar headers
     $headers = array_map(function($header) {
         return trim(str_replace("\xEF\xBB\xBF", '', $header));
     }, $headers);
@@ -299,9 +298,6 @@ function importarElementos($archivo_csv)
     return $importados;
 }
 
-/**
- * Obtiene estadísticas de la tabla temporal
- */
 function obtenerEstadisticasTablaTemp()
 {
     $database = new Database();
