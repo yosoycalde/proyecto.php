@@ -269,7 +269,6 @@ function procesarInventarioIneditto($archivo_csv)
             throw new Exception("No se encontraron datos válidos en el archivo");
         }
 
-        // Preparar consulta de inserción
         $query = "INSERT INTO inventarios_temp 
                   (IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR,
                    QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, 
