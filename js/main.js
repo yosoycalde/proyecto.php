@@ -9,21 +9,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const importCentrosBtn = document.getElementById('importCentrosBtn');
     const importElementosBtn = document.getElementById('importElementosBtn');
 
+    // Crear botón de limpieza
+    const actionButtons = document.querySelector('.action-buttons');
+    if (actionButtons) {
+        const cleanupBtn = document.createElement('button');
+        cleanupBtn.id = 'cleanupBtn';
+        cleanupBtn.innerHTML = '🧹 Limpiar Archivos y Datos';
+        cleanupBtn.className = 'config-btn';
+        cleanupBtn.style.display = 'none';
+        cleanupBtn.style.marginLeft = '15px';
+        actionButtons.appendChild(cleanupBtn);
+
+        // Event listener para limpieza manual
+        cleanupBtn.addEventListener('click', function() {
+            if (confirm('¿Está seguro de que desea eliminar todos los archivos temporales y datos procesados?')) {
+                realizarLimpiezaManual();
+            }
+        });
+    }
+
     // Manejar importación de centros de costos
     importCentrosBtn.addEventListener('click', function () {
-        configFile.accept = '.csv,.xlsx,.xls'; // Actualizar tipos aceptados
+        configFile.accept = '.csv,.xlsx,.xls';
         configFile.onchange = function () {
             if (this.files.length > 0) {
                 const file = this.files[0];
                 const fileExt = file.name.split('.').pop().toLowerCase();
                 
-                // Validar formato
                 if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
                     showMessage('Solo se permiten archivos CSV, XLSX o XLS', 'error');
                     return;
                 }
                 
-                // Mostrar advertencia para XLS
                 if (fileExt === 'xls') {
                     if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
                         return;
@@ -38,19 +55,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Manejar importación de elementos
     importElementosBtn.addEventListener('click', function () {
-        configFile.accept = '.csv,.xlsx,.xls'; // Actualizar tipos aceptados
+        configFile.accept = '.csv,.xlsx,.xls';
         configFile.onchange = function () {
             if (this.files.length > 0) {
                 const file = this.files[0];
                 const fileExt = file.name.split('.').pop().toLowerCase();
                 
-                // Validar formato
                 if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
                     showMessage('Solo se permiten archivos CSV, XLSX o XLS', 'error');
                     return;
                 }
                 
-                // Mostrar advertencia para XLS
                 if (fileExt === 'xls') {
                     if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
                         return;
@@ -70,7 +85,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const fileExt = file.name.split('.').pop().toUpperCase();
         
-        // Mostrar mensaje de carga con tipo de archivo
         showMessage(`Procesando archivo ${fileExt} - Importando ${tipo}...`, 'info');
 
         fetch('includes/upload_handler.php', {
@@ -106,13 +120,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const file = fileInput.files[0];
         const fileExt = file.name.split('.').pop().toLowerCase();
         
-        // Validar formato de archivo
         if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
             showMessage('Solo se permiten archivos CSV, XLSX o XLS para inventarios', 'error');
             return;
         }
 
-        // Mostrar advertencia para XLS
         if (fileExt === 'xls') {
             if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
                 return;
@@ -121,7 +133,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         formData.append('csvFile', file);
 
-        // Mostrar loading
         const processInfo = document.getElementById('processInfo');
         processInfo.innerHTML = `<p class="info">🔄 Procesando archivo ${fileExt.toUpperCase()} de inventario...</p>`;
         resultsSection.style.display = 'block';
@@ -154,9 +165,19 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <strong>Suma total cantidades:</strong> ${parseFloat(stats.suma_cantidades || 0).toFixed(2)}
                             </div>
                         </div>
+                        <div class="info" style="margin-top: 15px;">
+                            <p>💡 <strong>Importante:</strong> Después de descargar el archivo CSV, todos los archivos temporales y datos procesados se eliminarán automáticamente del servidor.</p>
+                        </div>
                     </div>`;
 
                     downloadBtn.style.display = 'inline-block';
+                    
+                    // Mostrar botón de limpieza manual
+                    const cleanupBtn = document.getElementById('cleanupBtn');
+                    if (cleanupBtn) {
+                        cleanupBtn.style.display = 'inline-block';
+                    }
+                    
                     mostrarVistPrevia();
                 } else {
                     processInfo.innerHTML = `<p class="error">❌ Error: ${data.message}</p>`;
@@ -169,8 +190,68 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     downloadBtn.addEventListener('click', function () {
-        window.location.href = 'includes/download_csv.php';
+        showMessage('📥 Iniciando descarga... Los archivos se limpiarán automáticamente después de la descarga.', 'info');
+        
+        // Crear un enlace temporal para la descarga
+        const link = document.createElement('a');
+        link.href = 'includes/download_csv.php';
+        link.download = 'contapyme_' + new Date().toISOString().slice(0,19).replace(/:/g, '-') + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Ocultar botones después de unos segundos (cuando la descarga debería haber comenzado)
+        setTimeout(() => {
+            downloadBtn.style.display = 'none';
+            const cleanupBtn = document.getElementById('cleanupBtn');
+            if (cleanupBtn) {
+                cleanupBtn.style.display = 'none';
+            }
+            
+            // Limpiar secciones de resultados
+            resultsSection.style.display = 'none';
+            previewSection.style.display = 'none';
+            
+            showMessage('✅ Descarga completada. Archivos temporales eliminados automáticamente.', 'success');
+            
+            // Resetear el formulario
+            document.getElementById('csvFile').value = '';
+            
+        }, 3000);
     });
+
+    function realizarLimpiezaManual() {
+        showMessage('🧹 Realizando limpieza manual...', 'info');
+        
+        fetch('includes/cleanup.php', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(`✅ Limpieza completada: ${data.archivos_eliminados} archivos y ${data.registros_eliminados} registros eliminados`, 'success');
+                
+                // Ocultar secciones y resetear interfaz
+                resultsSection.style.display = 'none';
+                previewSection.style.display = 'none';
+                downloadBtn.style.display = 'none';
+                const cleanupBtn = document.getElementById('cleanupBtn');
+                if (cleanupBtn) {
+                    cleanupBtn.style.display = 'none';
+                }
+                
+                // Resetear formulario
+                document.getElementById('csvFile').value = '';
+                
+            } else {
+                showMessage(`❌ Error en la limpieza: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('❌ Error de conexión durante la limpieza', 'error');
+        });
+    }
 
     function mostrarVistPrevia() {
         fetch('includes/get_preview.php')
@@ -180,11 +261,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const tableHead = document.getElementById('tableHead');
                     const tableBody = document.getElementById('tableBody');
 
-                    // Limpiar tabla
                     tableHead.innerHTML = '';
                     tableBody.innerHTML = '';
 
-                    // Headers
                     const headerRow = document.createElement('tr');
                     ['Código Elemento', 'Categoría/Descripción', 'Cantidad', 'Fecha', 'Centro Costo', 'Labor Original', 'Observaciones'].forEach(header => {
                         const th = document.createElement('th');
@@ -193,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                     tableHead.appendChild(headerRow);
 
-                    // Datos
                     data.data.forEach(row => {
                         const tr = document.createElement('tr');
                         Object.values(row).forEach(cell => {
@@ -204,7 +282,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         tableBody.appendChild(tr);
                     });
 
-                    // Mostrar distribución de centros de costo
                     if (data.distribucion_centros_costo) {
                         const distribucionDiv = document.getElementById('distribucion');
                         if (distribucionDiv) {
@@ -226,7 +303,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showMessage(message, type) {
-        // Crear o actualizar elemento de mensaje
         let messageDiv = document.getElementById('globalMessage');
         if (!messageDiv) {
             messageDiv = document.createElement('div');
@@ -247,7 +323,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.appendChild(messageDiv);
         }
 
-        // Establecer color según el tipo
         switch (type) {
             case 'success':
                 messageDiv.style.backgroundColor = '#28a745';
@@ -266,7 +341,6 @@ document.addEventListener('DOMContentLoaded', function () {
         messageDiv.style.display = 'block';
         messageDiv.style.opacity = '1';
 
-        // Auto-ocultar después de 6 segundos
         setTimeout(() => {
             messageDiv.style.opacity = '0';
             setTimeout(() => {
