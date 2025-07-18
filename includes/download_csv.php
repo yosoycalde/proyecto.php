@@ -6,7 +6,6 @@ require_once '../config/database.php';
 require_once 'functions.php';
 
 try {
-    // Verificar que hay datos en la tabla temporal
     $database = new Database();
     $conn = $database->connect();
 

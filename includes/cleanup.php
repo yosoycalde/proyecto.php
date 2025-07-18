@@ -36,9 +36,7 @@ function limpiarArchivosTemporales() {
     return $archivosEliminados;
 }
 
-/**
- * limpiar tabla temporal
- */
+
 function limpiarTablaTemporalInventarios() {
     try {
         $database = new Database();

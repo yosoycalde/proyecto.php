@@ -72,7 +72,6 @@ function procesarInventarioIneditto($archivo_csv)
     $conn = $database->connect();
 
     try {
-        // Limpiar tabla temporal
         $conn->exec("DELETE FROM inventarios_temp");
 
         $datos = [];
