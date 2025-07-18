@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
         actionButtons.appendChild(cleanupBtn);
 
         // Event listener para limpieza manual
-        cleanupBtn.addEventListener('click', function() {
+        cleanupBtn.addEventListener('click', function () {
             if (confirm('¿Está seguro de que desea eliminar todos los archivos temporales y datos procesados?')) {
                 realizarLimpiezaManual();
             }
@@ -35,18 +35,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (this.files.length > 0) {
                 const file = this.files[0];
                 const fileExt = file.name.split('.').pop().toLowerCase();
-                
+
                 if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
                     showMessage('Solo se permiten archivos CSV, XLSX o XLS', 'error');
                     return;
                 }
-                
+
                 if (fileExt === 'xls') {
                     if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
                         return;
                     }
                 }
-                
+
                 importarArchivo('import_centros', file, 'Centros de Costos');
             }
         };
@@ -60,18 +60,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (this.files.length > 0) {
                 const file = this.files[0];
                 const fileExt = file.name.split('.').pop().toLowerCase();
-                
+
                 if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
                     showMessage('Solo se permiten archivos CSV, XLSX o XLS', 'error');
                     return;
                 }
-                
+
                 if (fileExt === 'xls') {
                     if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
                         return;
                     }
                 }
-                
+
                 importarArchivo('import_elementos', file, 'Elementos');
             }
         };
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('action', action);
 
         const fileExt = file.name.split('.').pop().toUpperCase();
-        
+
         showMessage(`Procesando archivo ${fileExt} - Importando ${tipo}...`, 'info');
 
         fetch('includes/upload_handler.php', {
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const file = fileInput.files[0];
         const fileExt = file.name.split('.').pop().toLowerCase();
-        
+
         if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
             showMessage('Solo se permiten archivos CSV, XLSX o XLS para inventarios', 'error');
             return;
@@ -171,13 +171,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>`;
 
                     downloadBtn.style.display = 'inline-block';
-                    
+
                     // Mostrar botón de limpieza manual
                     const cleanupBtn = document.getElementById('cleanupBtn');
                     if (cleanupBtn) {
                         cleanupBtn.style.display = 'inline-block';
                     }
-                    
+
                     mostrarVistPrevia();
                 } else {
                     processInfo.innerHTML = `<p class="error">❌ Error: ${data.message}</p>`;
@@ -191,15 +191,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     downloadBtn.addEventListener('click', function () {
         showMessage('📥 Iniciando descarga... Los archivos se limpiarán automáticamente después de la descarga.', 'info');
-        
+
         // Crear un enlace temporal para la descarga
         const link = document.createElement('a');
         link.href = 'includes/download_csv.php';
-        link.download = 'contapyme_' + new Date().toISOString().slice(0,19).replace(/:/g, '-') + '.csv';
+        link.download = 'contapyme_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.csv';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Ocultar botones después de unos segundos (cuando la descarga debería haber comenzado)
         setTimeout(() => {
             downloadBtn.style.display = 'none';
@@ -207,50 +207,50 @@ document.addEventListener('DOMContentLoaded', function () {
             if (cleanupBtn) {
                 cleanupBtn.style.display = 'none';
             }
-            
+
             // Limpiar secciones de resultados
             resultsSection.style.display = 'none';
             previewSection.style.display = 'none';
-            
+
             showMessage('✅ Descarga completada. Archivos temporales eliminados automáticamente.', 'success');
-            
+
             // Resetear el formulario
             document.getElementById('csvFile').value = '';
-            
+
         }, 3000);
     });
 
     function realizarLimpiezaManual() {
         showMessage('🧹 Realizando limpieza manual...', 'info');
-        
+
         fetch('includes/cleanup.php', {
             method: 'POST'
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showMessage(`✅ Limpieza completada: ${data.archivos_eliminados} archivos y ${data.registros_eliminados} registros eliminados`, 'success');
-                
-                // Ocultar secciones y resetear interfaz
-                resultsSection.style.display = 'none';
-                previewSection.style.display = 'none';
-                downloadBtn.style.display = 'none';
-                const cleanupBtn = document.getElementById('cleanupBtn');
-                if (cleanupBtn) {
-                    cleanupBtn.style.display = 'none';
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(`✅ Limpieza completada: ${data.archivos_eliminados} archivos y ${data.registros_eliminados} registros eliminados`, 'success');
+
+                    // Ocultar secciones y resetear interfaz
+                    resultsSection.style.display = 'none';
+                    previewSection.style.display = 'none';
+                    downloadBtn.style.display = 'none';
+                    const cleanupBtn = document.getElementById('cleanupBtn');
+                    if (cleanupBtn) {
+                        cleanupBtn.style.display = 'none';
+                    }
+
+                    // Resetear formulario
+                    document.getElementById('csvFile').value = '';
+
+                } else {
+                    showMessage(`❌ Error en la limpieza: ${data.message}`, 'error');
                 }
-                
-                // Resetear formulario
-                document.getElementById('csvFile').value = '';
-                
-            } else {
-                showMessage(`❌ Error en la limpieza: ${data.message}`, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showMessage('❌ Error de conexión durante la limpieza', 'error');
-        });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('❌ Error de conexión durante la limpieza', 'error');
+            });
     }
 
     function mostrarVistPrevia() {
