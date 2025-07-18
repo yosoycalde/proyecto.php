@@ -6,7 +6,6 @@ try {
     $database = new Database();
     $conn = $database->connect();
 
-    // Obtener vista previa de los datos procesados
     $query = "SELECT 
                 IRECURSO as codigo_elemento,
                 ICCSUBCC as descripcion_categoria, 
@@ -23,7 +22,6 @@ try {
     $stmt->execute();
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Obtener estadísticas generales
     $statsQuery = "SELECT 
                     COUNT(*) as total_registros,
                     COUNT(CASE WHEN ILABOR IS NULL OR ILABOR = '' THEN 1 END) as registros_sin_labor,
@@ -37,7 +35,6 @@ try {
     $statsStmt->execute();
     $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
 
-    // Obtener distribución de centros de costos
     $distQuery = "SELECT centro_costo_asignado, COUNT(*) as cantidad_registros 
                   FROM inventarios_temp 
                   GROUP BY centro_costo_asignado 

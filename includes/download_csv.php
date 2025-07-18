@@ -1,6 +1,5 @@
 <?php
-// download_csv.php - Versión mejorada
-// Evitar cualquier output antes de los headers
+
 ob_start();
 
 require_once '../config/database.php';
@@ -20,7 +19,6 @@ try {
         throw new Exception("No hay datos procesados para descargar. Primero debe procesar un archivo de inventario.");
     }
 
-    // Obtener los datos antes de limpiar
     $query = "SELECT IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, 
                      centro_costo_asignado as ICCSUBCC, ILABOR, QCANTLUN, QCANTMAR, 
                      QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, SOBSERVAC 
@@ -98,7 +96,6 @@ try {
         $registrosEliminados = 0;
     }
 
-    // Limpiar archivos temporales de la carperta uploads
     $archivosEliminados = 0;
     $uploadDir = '../uploads/';
     if (is_dir($uploadDir)) {
@@ -118,7 +115,6 @@ try {
 
     error_log("Limpieza realizada antes de descarga: $archivosEliminados archivos eliminados, $registrosEliminados registros eliminados");
 
-    // Ahora enviar el archivo para descarga
     $filename = 'contapyme_' . date('Y-m-d_H-i-s') . '.csv';
 
     header('Content-Type: text/csv; charset=utf-8');
@@ -132,10 +128,8 @@ try {
     exit;
 
 } catch (Exception $e) {
-    // Limpiar buffer si hay error
     ob_end_clean();
 
-    // Mostrar error en página HTML
     ?>
     <!DOCTYPE html>
     <html lang="es">
@@ -198,7 +192,6 @@ try {
         </div>
 
         <script>
-            // Limpiar automáticamente en caso de error después de 3 segundos
             setTimeout(function () {
                 fetch('../includes/cleanup.php', {
                     method: 'POST'

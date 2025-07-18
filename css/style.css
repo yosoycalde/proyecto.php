@@ -14,7 +14,7 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    background: white;
+    background: rgb(131, 83, 141);
     border-radius: 15px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     padding: 40px;
@@ -54,7 +54,7 @@ h2 {
 .preview-section {
     margin-bottom: 30px;
     padding: 25px;
-    border: 1px solid #e1e8ed;
+    border: 1px solid #e8e1ed;
     border-radius: 10px;
     background: #f8f9fa;
     position: relative;
@@ -352,7 +352,6 @@ tr:hover {
     margin-top: 20px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .container {
         padding: 20px;
@@ -386,7 +385,6 @@ tr:hover {
     }
 }
 
-/* Animaciones */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -405,7 +403,6 @@ tr:hover {
     animation: fadeIn 0.5s ease-out;
 }
 
-/* Loading animation */
 .loading {
     display: inline-block;
     width: 20px;

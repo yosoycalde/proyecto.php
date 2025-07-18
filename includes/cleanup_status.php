@@ -6,23 +6,21 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 require_once '../config/database.php';
 
-/**
- * Verificar el estado de la limpieza
- */
+
 function verificarEstadoLimpieza()
 {
     try {
         $database = new Database();
         $conn = $database->connect();
 
-        // Verificar registros en tabla temporal
+
         $query = "SELECT COUNT(*) as total_registros FROM inventarios_temp";
         $stmt = $conn->prepare($query);
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $registrosTemporales = $result['total_registros'];
 
-        // Verificar archivos temporales
+
         $uploadDir = '../uploads/';
         $archivosTemporales = 0;
 
@@ -63,13 +61,11 @@ function realizarLimpiezaForzada()
         $database = new Database();
         $conn = $database->connect();
 
-        // Limpiar tabla temporal
         $query = "DELETE FROM inventarios_temp";
         $stmt = $conn->prepare($query);
         $stmt->execute();
         $registrosEliminados = $stmt->rowCount();
 
-        // Limpiar archivos temporales
         $uploadDir = '../uploads/';
         $archivosEliminados = 0;
 
@@ -104,10 +100,8 @@ function realizarLimpiezaForzada()
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Verificar estado
     echo json_encode(verificarEstadoLimpieza());
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Realizar limpieza forzada
     echo json_encode(realizarLimpiezaForzada());
 } else {
     echo json_encode([

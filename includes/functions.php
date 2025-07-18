@@ -17,14 +17,12 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         'PLEGADIZAS' => '11212317004'
     ];
 
-    // Si ILABOR no está vacío, buscar en el mapeo directo
     if (!empty(trim($ilabor))) {
         $ilaborUpper = strtoupper(trim($ilabor));
         if (isset($mapeoIlabor[$ilaborUpper])) {
             return $mapeoIlabor[$ilaborUpper];
         }
         
-        // Si no está en el mapeo directo, buscar en la base de datos
         try {
             $query = "SELECT codigo FROM centros_costos WHERE UPPER(nombre) LIKE UPPER(:ilabor)";
             $stmt = $conn->prepare($query);
@@ -41,20 +39,18 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         }
     }
 
-    // Mapeo por código de elemento (segunda prioridad)
     $mapeoElemento = [
-        '72312' => '11212317005', // Material de Empaque
-        '54003' => '11212317006', // Tintas
-        '62027' => '11212317007', // Material Preprensa
-        '62028' => '11212317007', // Material Preprensa
-        '62031' => '11212317007'  // Material Preprensa
+        '72312' => '11212317005', 
+        '54003' => '11212317006', 
+        '62027' => '11212317007', 
+        '62028' => '11212317007', 
+        '62031' => '11212317007'  
     ];
 
     if (!empty($codigo_elemento) && isset($mapeoElemento[$codigo_elemento])) {
         return $mapeoElemento[$codigo_elemento];
     }
 
-    // Si hay código de elemento, buscar en la base de datos
     if (!empty($codigo_elemento)) {
         try {
             $query = "SELECT centro_costo_1 FROM elementos WHERE codigo = :codigo_elemento";
@@ -71,13 +67,9 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         }
     }
 
-    // Centro de costo por defecto
-    return '11212317001'; // REVISTAS
+    return '11212317001';
 }
 
-/**
- * Procesa el archivo CSV de inventario de Ineditto
- */
 function procesarInventarioIneditto($archivo_csv)
 {
     $database = new Database();
@@ -87,7 +79,6 @@ function procesarInventarioIneditto($archivo_csv)
         // Limpiar tabla temporal
         $conn->exec("DELETE FROM inventarios_temp");
 
-        // Leer archivo CSV
         $datos = [];
         if (!file_exists($archivo_csv)) {
             throw new Exception("Archivo CSV no encontrado: $archivo_csv");
@@ -98,13 +89,11 @@ function procesarInventarioIneditto($archivo_csv)
             throw new Exception("No se pudo abrir el archivo CSV");
         }
 
-        // Leer headers
         $headers = fgetcsv($handle, 1000, ",");
         if ($headers === FALSE) {
             throw new Exception("No se pudieron leer los headers del archivo CSV");
         }
 
-        // Limpiar headers de espacios en blanco y BOM
         $headers = array_map(function($header) {
             return trim(str_replace("\xEF\xBB\xBF", '', $header));
         }, $headers);
@@ -114,7 +103,7 @@ function procesarInventarioIneditto($archivo_csv)
             $lineNumber++;
             
             if (empty(array_filter($row))) {
-                continue; // Saltar líneas vacías
+                continue;
             }
             
             if (count($row) === count($headers)) {
@@ -129,7 +118,7 @@ function procesarInventarioIneditto($archivo_csv)
             throw new Exception("No se encontraron datos válidos en el archivo CSV");
         }
 
-        // Preparar consulta de inserción
+
         $query = "INSERT INTO inventarios_temp 
                   (IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR,
                    QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, 
@@ -141,10 +130,8 @@ function procesarInventarioIneditto($archivo_csv)
         $stmt = $conn->prepare($query);
         $procesados = 0;
 
-        // Procesar cada fila
         foreach ($datos as $index => $fila) {
             try {
-                // Obtener centro de costo usando la lógica requerida
                 $centro_costo = obtenerCentroCosto(
                     $fila['ILABOR'] ?? '', 
                     $fila['IRECURSO'] ?? ''
@@ -184,9 +171,6 @@ function procesarInventarioIneditto($archivo_csv)
     }
 }
 
-/**
- * Importa centros de costos desde CSV
- */
 function importarCentrosCostos($archivo_csv)
 {
     $database = new Database();
@@ -204,7 +188,6 @@ function importarCentrosCostos($archivo_csv)
         throw new Exception("No se pudieron leer los headers del archivo");
     }
 
-    // Limpiar headers
     $headers = array_map(function($header) {
         return trim(str_replace("\xEF\xBB\xBF", '', $header));
     }, $headers);
@@ -239,9 +222,6 @@ function importarCentrosCostos($archivo_csv)
     return $importados;
 }
 
-/**
- * Importa elementos desde CSV
- */
 function importarElementos($archivo_csv)
 {
     $database = new Database();

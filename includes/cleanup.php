@@ -6,9 +6,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 require_once '../config/database.php';
 
-/**
- * liempieza de archivos temporales 
- */
+
 function limpiarArchivosTemporales() {
     $uploadDir = '../uploads/';
     
@@ -26,7 +24,6 @@ function limpiarArchivosTemporales() {
         
         $rutaArchivo = $uploadDir . $archivo;
         
-        // Verificar si es un archivo y no un directorio
         if (is_file($rutaArchivo)) {
             if (preg_match('/^\d+_/', $archivo)) {
                 if (unlink($rutaArchivo)) {
