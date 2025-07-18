@@ -219,7 +219,6 @@ function procesarInventarioIneditto($archivo_csv)
     try {
         $conn->exec("DELETE FROM inventarios_temp");
 
-        // Verificar si es Excel y convertir si es necesario
         $fileExtension = strtolower(pathinfo($archivo_csv, PATHINFO_EXTENSION));
         $archivoAProcesar = $archivo_csv;
 
@@ -227,7 +226,6 @@ function procesarInventarioIneditto($archivo_csv)
             $archivoAProcesar = convertirExcelACSVNativo($archivo_csv);
         }
 
-        // Leer archivo CSV
         $datos = [];
         if (!file_exists($archivoAProcesar)) {
             throw new Exception("Archivo no encontrado: $archivoAProcesar");
@@ -286,7 +284,6 @@ function procesarInventarioIneditto($archivo_csv)
         // Procesar cada fila
         foreach ($datos as $index => $fila) {
             try {
-                // Obtener centro de costo usando la lógica requerida
                 $centro_costo = obtenerCentroCosto(
                     $fila['ILABOR'] ?? '',
                     $fila['IRECURSO'] ?? ''
