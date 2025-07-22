@@ -6,7 +6,6 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 require_once '../config/database.php';
 
-
 function limpiarArchivosTemporales() {
     $uploadDir = '../uploads/';
     
@@ -24,18 +23,15 @@ function limpiarArchivosTemporales() {
         
         $rutaArchivo = $uploadDir . $archivo;
         
-        if (is_file($rutaArchivo)) {
-            if (preg_match('/^\d+_/', $archivo)) {
-                if (unlink($rutaArchivo)) {
-                    $archivosEliminados++;
-                }
+        if (is_file($rutaArchivo) && preg_match('/^\d+_/', $archivo)) {
+            if (unlink($rutaArchivo)) {
+                $archivosEliminados++;
             }
         }
     }
     
     return $archivosEliminados;
 }
-
 
 function limpiarTablaTemporalInventarios() {
     try {
@@ -53,24 +49,28 @@ function limpiarTablaTemporalInventarios() {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+function realizarLimpiezaCompleta() {
     try {
         $archivosEliminados = limpiarArchivosTemporales();
         $registrosEliminados = limpiarTablaTemporalInventarios();
         
-        echo json_encode([
+        return [
             'success' => true,
             'message' => 'Limpieza completada exitosamente',
             'archivos_eliminados' => $archivosEliminados,
             'registros_eliminados' => $registrosEliminados
-        ]);
+        ];
         
     } catch (Exception $e) {
-        echo json_encode([
+        return [
             'success' => false,
             'message' => 'Error durante la limpieza: ' . $e->getMessage()
-        ]);
+        ];
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    echo json_encode(realizarLimpiezaCompleta());
 } else {
     echo json_encode([
         'success' => false,
