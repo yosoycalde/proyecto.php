@@ -1,9 +1,6 @@
 <?php
-
 ob_start();
-
 require_once '../config/database.php';
-require_once 'functions.php';
 
 try {
     $database = new Database();
@@ -55,7 +52,6 @@ try {
         'QCANTDOM',
         'SOBSERVAC'
     ];
-
     fputcsv($csvOutput, $headers);
 
     foreach ($resultados as $row) {
@@ -67,17 +63,16 @@ try {
             $row['INVENTARIO'] ?? '',
             $row['IRECURSO'] ?? '',
             $row['ICCSUBCC'] ?? '',
-            '',
+            '', 
             $row['QCANTLUN'] ?? '',
             '',
             '',
             '',
             '',
             '',
-            '',
+            '', 
             $row['SOBSERVAC'] ?? ''
         ];
-
         fputcsv($csvOutput, $csvRow);
     }
 
@@ -85,34 +80,7 @@ try {
     $csvContent = ob_get_contents();
     ob_end_clean();
 
-    try {
-        $deleteQuery = "DELETE FROM inventarios_temp";
-        $deleteStmt = $conn->prepare($deleteQuery);
-        $deleteStmt->execute();
-        $registrosEliminados = $deleteStmt->rowCount();
-    } catch (Exception $e) {
-        error_log("Error limpiando tabla temporal: " . $e->getMessage());
-        $registrosEliminados = 0;
-    }
-
-    $archivosEliminados = 0;
-    $uploadDir = '../uploads/';
-    if (is_dir($uploadDir)) {
-        $archivos = scandir($uploadDir);
-        foreach ($archivos as $archivo) {
-            if ($archivo === '.' || $archivo === '..')
-                continue;
-
-            $rutaArchivo = $uploadDir . $archivo;
-            if (is_file($rutaArchivo) && preg_match('/^\d+_/', $archivo)) {
-                if (unlink($rutaArchivo)) {
-                    $archivosEliminados++;
-                }
-            }
-        }
-    }
-
-    error_log("Limpieza realizada antes de descarga: $archivosEliminados archivos eliminados, $registrosEliminados registros eliminados");
+    realizarLimpiezaCompleta($conn);
 
     $filename = 'contapyme_' . date('Y-m-d_H-i-s') . '.csv';
 
@@ -128,7 +96,44 @@ try {
 
 } catch (Exception $e) {
     ob_end_clean();
+    mostrarErrorDescarga($e->getMessage());
+}
 
+function realizarLimpiezaCompleta($conn)
+{
+    try {
+        $deleteQuery = "DELETE FROM inventarios_temp";
+        $deleteStmt = $conn->prepare($deleteQuery);
+        $deleteStmt->execute();
+        $registrosEliminados = $deleteStmt->rowCount();
+
+        $uploadDir = '../uploads/';
+        $archivosEliminados = 0;
+
+        if (is_dir($uploadDir)) {
+            $archivos = scandir($uploadDir);
+            foreach ($archivos as $archivo) {
+                if ($archivo === '.' || $archivo === '..')
+                    continue;
+
+                $rutaArchivo = $uploadDir . $archivo;
+                if (is_file($rutaArchivo) && preg_match('/^\d+_/', $archivo)) {
+                    if (unlink($rutaArchivo)) {
+                        $archivosEliminados++;
+                    }
+                }
+            }
+        }
+
+        error_log("Limpieza completada: $archivosEliminados archivos y $registrosEliminados registros eliminados");
+
+    } catch (Exception $e) {
+        error_log("Error en limpieza automática: " . $e->getMessage());
+    }
+}
+
+function mostrarErrorDescarga($mensaje)
+{
     ?>
     <!DOCTYPE html>
     <html lang="es">
@@ -137,51 +142,13 @@ try {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Error - Descarga CSV</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                max-width: 600px;
-                margin: 100px auto;
-                padding: 20px;
-                text-align: center;
-            }
-
-            .error-container {
-                background: #f8d7da;
-                border: 1px solid #f5c6cb;
-                color: #721c24;
-                padding: 30px;
-                border-radius: 10px;
-            }
-
-            .back-btn {
-                background: #007bff;
-                color: white;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                text-decoration: none;
-                display: inline-block;
-                margin-top: 20px;
-            }
-
-            .cleanup-info {
-                background: #d1ecf1;
-                border: 1px solid #bee5eb;
-                color: #0c5460;
-                padding: 15px;
-                border-radius: 5px;
-                margin-top: 20px;
-                font-size: 0.9em;
-            }
-        </style>
+        <link rel="stylesheet" href="css/error.css">
     </head>
 
     <body>
         <div class="error-container">
             <h2> Error al generar archivo</h2>
-            <p><?php echo htmlspecialchars($e->getMessage()); ?></p>
+            <p><?php echo htmlspecialchars($mensaje); ?></p>
             <a href="../index.php" class="back-btn"> Volver al inicio</a>
 
             <div class="cleanup-info">
@@ -192,15 +159,14 @@ try {
 
         <script>
             setTimeout(function () {
-                fetch('../includes/cleanup.php', {
-                    method: 'POST'
-                }).then(response => response.json())
+                fetch('../includes/cleanup.php', { method: 'POST' })
+                    .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             console.log(' Limpieza automática completada');
                         }
                     }).catch(error => {
-                        console.log('Error en limpieza automática:', error);
+                        console.log(' Error en limpieza automática:', error);
                     });
             }, 3000);
         </script>
