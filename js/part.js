@@ -176,7 +176,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     animate();
 
-    // Debug info cada 5 segundos
     setInterval(() => {
         console.log(` Partículas activas: ${particleSystem.getParticleCount()}`);
     }, 5000);
