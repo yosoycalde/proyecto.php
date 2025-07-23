@@ -206,7 +206,6 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         }
     }
 
-    // CORREGIDO: Usar el mismo valor por defecto que en handler.php
     return '1121231700';
 }
 
@@ -221,7 +220,6 @@ function procesarInventarioIneditto($archivo_csv)
         $fileExtension = strtolower(pathinfo($archivo_csv, PATHINFO_EXTENSION));
         $archivoAProcesar = $archivo_csv;
 
-        // AGREGADO: Manejo de archivos Excel
         if (in_array($fileExtension, ['xlsx', 'xls'])) {
             $archivoAProcesar = convertirExcelACSVNativo($archivo_csv);
         }
@@ -261,7 +259,6 @@ function procesarInventarioIneditto($archivo_csv)
         }
         fclose($handle);
 
-        // AGREGADO: Limpiar archivo temporal si es diferente del original
         if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
