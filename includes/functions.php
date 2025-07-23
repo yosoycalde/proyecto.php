@@ -63,7 +63,7 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
         }
     }
 
-    return '11212317001';
+    return '11212317001'; 
 }
 
 function procesarInventarioIneditto($archivo_csv)
@@ -74,95 +74,99 @@ function procesarInventarioIneditto($archivo_csv)
     try {
         $conn->exec("DELETE FROM inventarios_temp");
 
-        $datos = [];
         if (!file_exists($archivo_csv)) {
             throw new Exception("Archivo CSV no encontrado: $archivo_csv");
         }
 
-        $handle = fopen($archivo_csv, "r");
-        if ($handle === FALSE) {
-            throw new Exception("No se pudo abrir el archivo CSV");
-        }
+        return procesarArchivoGenerico($archivo_csv, function($handle, $headers) use ($conn) {
+            $query = "INSERT INTO inventarios_temp 
+                      (IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR,
+                       QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, 
+                       SOBSERVAC, centro_costo_asignado) 
+                      VALUES (:iemp, :fsoport, :itdsop, :inumsop, :inventario, :irecurso, :iccsubcc, :ilabor,
+                              :qcantlun, :qcantmar, :qcantmie, :qcantjue, :qcantvie, :qcantsab, :qcantdom,
+                              :sobservac, :centro_costo)";
 
-        $headers = fgetcsv($handle, 1000, ",");
-        if ($headers === FALSE) {
-            throw new Exception("No se pudieron leer los headers del archivo CSV");
-        }
+            $stmt = $conn->prepare($query);
+            $procesados = 0;
+            $lineNumber = 1;
 
-        $headers = array_map(function($header) {
-            return trim(str_replace("\xEF\xBB\xBF", '', $header));
-        }, $headers);
-
-        $lineNumber = 1;
-        while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-            $lineNumber++;
-            
-            if (empty(array_filter($row))) {
-                continue;
-            }
-            
-            if (count($row) === count($headers)) {
-                $datos[] = array_combine($headers, $row);
-            } else {
-                error_log("Línea $lineNumber: número de columnas no coincide. Esperadas: " . count($headers) . ", encontradas: " . count($row));
-            }
-        }
-        fclose($handle);
-
-        if (empty($datos)) {
-            throw new Exception("No se encontraron datos válidos en el archivo CSV");
-        }
-
-
-        $query = "INSERT INTO inventarios_temp 
-                  (IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR,
-                   QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, 
-                   SOBSERVAC, centro_costo_asignado) 
-                  VALUES (:iemp, :fsoport, :itdsop, :inumsop, :inventario, :irecurso, :iccsubcc, :ilabor,
-                          :qcantlun, :qcantmar, :qcantmie, :qcantjue, :qcantvie, :qcantsab, :qcantdom,
-                          :sobservac, :centro_costo)";
-
-        $stmt = $conn->prepare($query);
-        $procesados = 0;
-
-        foreach ($datos as $index => $fila) {
-            try {
-                $centro_costo = obtenerCentroCosto(
-                    $fila['ILABOR'] ?? '', 
-                    $fila['IRECURSO'] ?? ''
-                );
-
-                $stmt->execute([
-                    ':iemp' => $fila['IEMP'] ?? '1',
-                    ':fsoport' => $fila['FSOPORT'] ?? '',
-                    ':itdsop' => $fila['ITDSOP'] ?? '160',
-                    ':inumsop' => $fila['INUMSOP'] ?? '',
-                    ':inventario' => $fila['INVENTARIO'] ?? '1',
-                    ':irecurso' => $fila['IRECURSO'] ?? '',
-                    ':iccsubcc' => $centro_costo,
-                    ':ilabor' => $fila['ILABOR'] ?? '',
-                    ':qcantlun' => !empty($fila['QCANTLUN']) ? floatval($fila['QCANTLUN']) : 0,
-                    ':qcantmar' => !empty($fila['QCANTMAR']) ? floatval($fila['QCANTMAR']) : null,
-                    ':qcantmie' => !empty($fila['QCANTMIE']) ? floatval($fila['QCANTMIE']) : null,
-                    ':qcantjue' => !empty($fila['QCANTJUE']) ? floatval($fila['QCANTJUE']) : null,
-                    ':qcantvie' => !empty($fila['QCANTVIE']) ? floatval($fila['QCANTVIE']) : null,
-                    ':qcantsab' => !empty($fila['QCANTSAB']) ? floatval($fila['QCANTSAB']) : null,
-                    ':qcantdom' => !empty($fila['QCANTDOM']) ? floatval($fila['QCANTDOM']) : null,
-                    ':sobservac' => $fila['SOBSERVAC'] ?? '',
-                    ':centro_costo' => $centro_costo
-                ]);
+            while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                $lineNumber++;
                 
-                $procesados++;
+                if (empty(array_filter($row))) {
+                    continue;
+                }
                 
-            } catch (Exception $e) {
-                error_log("Error procesando fila " . ($index + 2) . ": " . $e->getMessage() . " - Datos: " . print_r($fila, true));
+                if (count($row) === count($headers)) {
+                    $fila = array_combine($headers, $row);
+             
+                    try {
+                        $centro_costo = obtenerCentroCosto(
+                            $fila['ILABOR'] ?? '', 
+                            $fila['IRECURSO'] ?? ''
+                        );
+
+                        $stmt->execute([
+                            ':iemp' => $fila['IEMP'] ?? '1',
+                            ':fsoport' => $fila['FSOPORT'] ?? '',
+                            ':itdsop' => $fila['ITDSOP'] ?? '160',
+                            ':inumsop' => $fila['INUMSOP'] ?? '',
+                            ':inventario' => $fila['INVENTARIO'] ?? '1',
+                            ':irecurso' => $fila['IRECURSO'] ?? '',
+                            ':iccsubcc' => $centro_costo,
+                            ':ilabor' => $fila['ILABOR'] ?? '',
+                            ':qcantlun' => !empty($fila['QCANTLUN']) ? floatval($fila['QCANTLUN']) : 0,
+                            ':qcantmar' => !empty($fila['QCANTMAR']) ? floatval($fila['QCANTMAR']) : null,
+                            ':qcantmie' => !empty($fila['QCANTMIE']) ? floatval($fila['QCANTMIE']) : null,
+                            ':qcantjue' => !empty($fila['QCANTJUE']) ? floatval($fila['QCANTJUE']) : null,
+                            ':qcantvie' => !empty($fila['QCANTVIE']) ? floatval($fila['QCANTVIE']) : null,
+                            ':qcantsab' => !empty($fila['QCANTSAB']) ? floatval($fila['QCANTSAB']) : null,
+                            ':qcantdom' => !empty($fila['QCANTDOM']) ? floatval($fila['QCANTDOM']) : null,
+                            ':sobservac' => $fila['SOBSERVAC'] ?? '',
+                            ':centro_costo' => $centro_costo
+                        ]);
+                        
+                        $procesados++;
+                    } catch (Exception $e) {
+                        error_log("Error procesando fila $lineNumber: " . $e->getMessage() . " - Datos: " . print_r($fila, true));
+                    }
+                } else {
+                    error_log("Línea $lineNumber: Columnas faltantes. Esperadas: " . count($headers) . ", encontradas: " . count($row));
+                }
             }
-        }
 
-        return $procesados;
-
+            return $procesados;
+        });
     } catch (Exception $e) {
         throw new Exception("Error procesando inventario: " . $e->getMessage());
+    }
+}
+
+function procesarArchivoGenerico($archivo_csv, $callback)
+{
+    $handle = fopen($archivo_csv, "r");
+    
+    if ($handle === FALSE) {
+        throw new Exception("Error con el archivo.");
+    }
+
+    $headers = fgetcsv($handle, 1000, ",");
+    if ($headers === FALSE) {
+        throw new Exception("No se pudieron leer los headers del archivo");
+    }
+
+    $headers = array_map(function($header) {
+        return trim(str_replace("\xEF\xBB\xBF", '', $header));
+    }, $headers);
+
+    try {
+        $resultado = $callback($handle, $headers);
+        fclose($handle);
+        return $resultado;
+    } catch (Exception $e) {
+        fclose($handle);
+        throw $e;
     }
 }
 
@@ -171,50 +175,36 @@ function importarCentrosCostos($archivo_csv)
     $database = new Database();
     $conn = $database->connect();
 
-    $importados = 0;
-    $handle = fopen($archivo_csv, "r");
-    
-    if ($handle === FALSE) {
-        throw new Exception("No se pudo abrir el archivo de centros de costos");
-    }
+    return procesarArchivoGenerico($archivo_csv, function($handle, $headers) use ($conn) {
+        $query = "INSERT INTO centros_costos (codigo, nombre) VALUES (:codigo, :nombre)
+                  ON DUPLICATE KEY UPDATE nombre = :nombre2";
+        $stmt = $conn->prepare($query);
+        $importados = 0;
 
-    $headers = fgetcsv($handle, 1000, ",");
-    if ($headers === FALSE) {
-        throw new Exception("No se pudieron leer los headers del archivo");
-    }
-
-    $headers = array_map(function($header) {
-        return trim(str_replace("\xEF\xBB\xBF", '', $header));
-    }, $headers);
-
-    $query = "INSERT INTO centros_costos (codigo, nombre) VALUES (:codigo, :nombre)
-              ON DUPLICATE KEY UPDATE nombre = :nombre2";
-    $stmt = $conn->prepare($query);
-
-    while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-        if (count($row) === count($headers)) {
-            $data = array_combine($headers, $row);
-            
-            $codigo = trim($data['Codigo'] ?? $data['codigo'] ?? '');
-            $nombre = trim($data['Nombre'] ?? $data['nombre'] ?? '');
-            
-            if (!empty($codigo) && !empty($nombre)) {
-                try {
-                    $stmt->execute([
-                        ':codigo' => $codigo,
-                        ':nombre' => $nombre,
-                        ':nombre2' => $nombre
-                    ]);
-                    $importados++;
-                } catch (Exception $e) {
-                    error_log("Error importando centro de costo: " . $e->getMessage());
+        while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            if (count($row) === count($headers)) {
+                $data = array_combine($headers, $row);
+                
+                $codigo = trim($data['Codigo'] ?? $data['codigo'] ?? '');
+                $nombre = trim($data['Nombre'] ?? $data['nombre'] ?? '');
+                
+                if (!empty($codigo) && !empty($nombre)) {
+                    try {
+                        $stmt->execute([
+                            ':codigo' => $codigo,
+                            ':nombre' => $nombre,
+                            ':nombre2' => $nombre
+                        ]);
+                        $importados++;
+                    } catch (Exception $e) {
+                        error_log("No se pudo importar centro de costos:  " . $e->getMessage());
+                    }
                 }
             }
         }
-    }
-    
-    fclose($handle);
-    return $importados;
+
+        return $importados;
+    });
 }
 
 function importarElementos($archivo_csv)
@@ -222,105 +212,55 @@ function importarElementos($archivo_csv)
     $database = new Database();
     $conn = $database->connect();
 
-    $importados = 0;
-    $handle = fopen($archivo_csv, "r");
-    
-    if ($handle === FALSE) {
-        throw new Exception("No se pudo abrir el archivo de elementos");
-    }
+    return procesarArchivoGenerico($archivo_csv, function($handle, $headers) use ($conn) {
+        $query = "INSERT INTO elementos 
+                  (codigo, referencia, descripcion, centro_costo_1, centro_costo_2, centro_costo_3, centro_costo_4, centro_costo_5) 
+                  VALUES (:codigo, :referencia, :descripcion, :cc1, :cc2, :cc3, :cc4, :cc5)
+                  ON DUPLICATE KEY UPDATE 
+                  referencia = :referencia2,
+                  descripcion = :descripcion2,
+                  centro_costo_1 = :cc1_2,
+                  centro_costo_2 = :cc2_2,
+                  centro_costo_3 = :cc3_2,
+                  centro_costo_4 = :cc4_2,
+                  centro_costo_5 = :cc5_2";
 
-    $headers = fgetcsv($handle, 1000, ",");
-    if ($headers === FALSE) {
-        throw new Exception("No se pudieron leer los headers del archivo");
-    }
+        $stmt = $conn->prepare($query);
+        $importados = 0;
 
-    $headers = array_map(function($header) {
-        return trim(str_replace("\xEF\xBB\xBF", '', $header));
-    }, $headers);
+        while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            if (count($row) === count($headers)) {
+                $data = array_combine($headers, $row);
+                
+                $codigo = trim($data['Cód. Artículo'] ?? $data['codigo'] ?? '');
+                $referencia = trim($data['Referencia'] ?? $data['referencia'] ?? '');
+                $descripcion = trim($data['Descripción'] ?? $data['descripcion'] ?? '');
+                
+                if (!empty($codigo)) {
+                    try {
+                        $cc1 = !empty($data['Centro Costos 1']) ? trim($data['Centro Costos 1']) : null;
+                        $cc2 = !empty($data['Centro Costos 2']) ? trim($data['Centro Costos 2']) : null;
+                        $cc3 = !empty($data['Centro Costos 3']) ? trim($data['Centro Costos 3']) : null;
+                        $cc4 = !empty($data['Centro Costos 4']) ? trim($data['Centro Costos 4']) : null;
+                        $cc5 = !empty($data['Centro Costos 5']) ? trim($data['Centro Costos 5']) : null;
 
-    $query = "INSERT INTO elementos 
-              (codigo, referencia, descripcion, centro_costo_1, centro_costo_2, centro_costo_3, centro_costo_4, centro_costo_5) 
-              VALUES (:codigo, :referencia, :descripcion, :cc1, :cc2, :cc3, :cc4, :cc5)
-              ON DUPLICATE KEY UPDATE 
-              referencia = :referencia2,
-              descripcion = :descripcion2,
-              centro_costo_1 = :cc1_2,
-              centro_costo_2 = :cc2_2,
-              centro_costo_3 = :cc3_2,
-              centro_costo_4 = :cc4_2,
-              centro_costo_5 = :cc5_2";
-
-    $stmt = $conn->prepare($query);
-
-    while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-        if (count($row) === count($headers)) {
-            $data = array_combine($headers, $row);
-            
-            $codigo = trim($data['Cód. Artículo'] ?? $data['codigo'] ?? '');
-            $referencia = trim($data['Referencia'] ?? $data['referencia'] ?? '');
-            $descripcion = trim($data['Descripción'] ?? $data['descripcion'] ?? '');
-            
-            if (!empty($codigo)) {
-                try {
-                    $cc1 = !empty($data['Centro Costos 1']) ? trim($data['Centro Costos 1']) : null;
-                    $cc2 = !empty($data['Centro Costos 2']) ? trim($data['Centro Costos 2']) : null;
-                    $cc3 = !empty($data['Centro Costos 3']) ? trim($data['Centro Costos 3']) : null;
-                    $cc4 = !empty($data['Centro Costos 4']) ? trim($data['Centro Costos 4']) : null;
-                    $cc5 = !empty($data['Centro Costos 5']) ? trim($data['Centro Costos 5']) : null;
-
-                    $stmt->execute([
-                        ':codigo' => $codigo,
-                        ':referencia' => $referencia,
-                        ':descripcion' => $descripcion,
-                        ':cc1' => $cc1,
-                        ':cc2' => $cc2,
-                        ':cc3' => $cc3,
-                        ':cc4' => $cc4,
-                        ':cc5' => $cc5,
-                        ':referencia2' => $referencia,
-                        ':descripcion2' => $descripcion,
-                        ':cc1_2' => $cc1,
-                        ':cc2_2' => $cc2,
-                        ':cc3_2' => $cc3,
-                        ':cc4_2' => $cc4,
-                        ':cc5_2' => $cc5
-                    ]);
-                    $importados++;
-                } catch (Exception $e) {
-                    error_log("Error importando elemento: " . $e->getMessage());
+                        $stmt->execute([
+                            ':codigo' => $codigo,
+                            ':referencia' => $referencia,
+                            ':descripcion' => $descripcion,
+                            ':cc1' => $cc1, ':cc2' => $cc2, ':cc3' => $cc3, ':cc4' => $cc4, ':cc5' => $cc5,
+                            ':referencia2' => $referencia,
+                            ':descripcion2' => $descripcion,
+                            ':cc1_2' => $cc1, ':cc2_2' => $cc2, ':cc3_2' => $cc3, ':cc4_2' => $cc4, ':cc5_2' => $cc5
+                        ]);
+                        $importados++;
+                    } catch (Exception $e) {
+                        error_log("No se pudo importar elemento: " . $e->getMessage());
+                    }
                 }
             }
         }
-    }
-    
-    fclose($handle);
-    return $importados;
+    });
 }
 
-function obtenerEstadisticasTablaTemp()
-{
-    $database = new Database();
-    $conn = $database->connect();
-
-    try {
-        $query = "SELECT 
-                    COUNT(*) as total_registros,
-                    COUNT(CASE WHEN ILABOR IS NULL OR ILABOR = '' THEN 1 END) as ilabor_vacios,
-                    COUNT(DISTINCT centro_costo_asignado) as centros_costo_diferentes,
-                    COALESCE(SUM(QCANTLUN), 0) as suma_cantidades
-                  FROM inventarios_temp";
-
-        $stmt = $conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        error_log("Error obteniendo estadísticas: " . $e->getMessage());
-        return [
-            'total_registros' => 0,
-            'ilabor_vacios' => 0,
-            'centros_costo_diferentes' => 0,
-            'suma_cantidades' => 0
-        ];
-    }
-}
 ?>
