@@ -324,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 font-weight: bold;
                 z-index: 1000;
                 max-width: 400px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.43);
                 transition: all 0.3s ease;
             `;
             document.body.appendChild(messageDiv);
