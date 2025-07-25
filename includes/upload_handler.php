@@ -21,7 +21,7 @@ function convertirExcelACSV($archivoExcel)
         return convertirXLSACSV($archivoExcel);
     }
 
-    throw new Exception("Formato de archivo no soportado: $fileExtension");
+    throw new Exception("formato no encontrado : $fileExtension");
 }
 
 function convertirXLSXACSV($archivoXLSX)
