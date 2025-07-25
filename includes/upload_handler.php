@@ -113,14 +113,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (!in_array($fileExtension, ['csv', 'xlsx', 'xls'])) {
-                throw new Exception('Solo se permiten archivos CSV, XLSX o XLS');
+                throw new Exception('Recuerda, Solo se permiten archivos CSV, XLSX o XLS');
             }
 
             $fileName = time() . '_centros_' . $file['name'];
             $uploadPath = $uploadDir . $fileName;
 
             if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-                throw new Exception('Error al subir el archivo');
+                throw new Exception('Tenemos problemas en subir el archivo (Verificalo):');
             }
 
             try {
