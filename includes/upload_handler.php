@@ -198,7 +198,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw $e;
             }
         }
-
         if (isset($_FILES['csvFile'])) {
 
             $uploadDir = '../uploads/';
