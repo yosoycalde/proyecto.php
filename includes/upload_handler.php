@@ -32,7 +32,7 @@ function convertirXLSXACSV($archivoXLSX)
 
         $zip = new ZipArchive();
         if ($zip->open($archivoXLSX) !== TRUE) {
-            throw new Exception("No se pudo abrir el archivo XLSX");
+            throw new Exception("No se pude interactuar con el archivo :(");
         }
 
         $sharedStrings = [];
@@ -49,6 +49,7 @@ function convertirXLSXACSV($archivoXLSX)
             $worksheetData = $worksheetXML;
         }
 
+        
         $zip->close();
 
         if (empty($worksheetData)) {
