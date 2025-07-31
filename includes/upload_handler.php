@@ -21,7 +21,7 @@ function convertirExcelACSV($archivoExcel)
         return convertirXLSACSV($archivoExcel);
     }
 
-    throw new Exception("formato no encontrado : $fileExtension");
+    throw new Exception("Formato de archivo no soportado: $fileExtension");
 }
 
 function convertirXLSXACSV($archivoXLSX)
@@ -32,7 +32,7 @@ function convertirXLSXACSV($archivoXLSX)
 
         $zip = new ZipArchive();
         if ($zip->open($archivoXLSX) !== TRUE) {
-            throw new Exception("No se pude interactuar con el archivo :(");
+            throw new Exception("Formato de archivo no soportado: $fileExtension");
         }
 
         $sharedStrings = [];

@@ -174,7 +174,7 @@ function obtenerCentroCosto($ilabor, $codigo_elemento)
             $stmt->bindParam(':ilabor', $searchTerm);
             $stmt->execute();
 
-           $result = $stmt -> fetch(PDO::FETCH_ASSOC);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($result) {
                 return $result['codigo'];
             }
