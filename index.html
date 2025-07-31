@@ -7,33 +7,10 @@
     <title>Interfaz Ineditto → ContaPyme</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="icon/interfaz.png">
-    <style>
-        #particleCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            pointer-events: none;
-        }
-        
-        .container {
-            position: relative;
-            z-index: 1;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(2px);
-        }
-        
-        .particle-interactive {
-            pointer-events: auto;
-        }
-    </style>
 </head>
 
 <body>
     <canvas id="particleCanvas"></canvas>
-    
     <div class="container">
         <h1>☢ Procesador de Inventarios Ineditto → ContaPyme ☢</h1>
 
@@ -119,7 +96,7 @@
             <div id="processInfo"></div>
             <div class="action-buttons">
                 <button id="downloadBtn" class="download-btn" style="display: none;">
-                     Descargar CSV para ContaPyme
+                    Descargar CSV para ContaPyme
                 </button>
             </div>
         </div>
@@ -143,14 +120,9 @@
                 </table>
             </div>
         </div>
-        
-        <div class="particle-interactive" style="position: fixed; bottom: 20px; right: 20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; text-align: center;">
-            ✨
-        </div>
     </div>
-    
+
     <script src="js/main.js"></script>
-    <script src="js/part.js"></script>
 </body>
 
 </html>
