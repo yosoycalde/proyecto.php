@@ -111,7 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $file = $_FILES['configFile'];
 
-
             $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (!in_array($fileExtension, ['csv', 'xlsx', 'xls'])) {
                 throw new Exception('Recuerda, Solo se permiten archivos CSV, XLSX o XLS');
@@ -250,13 +249,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         throw new Exception('No se encontró una acción válida o archivo requerido');
 
     } catch (Exception $e) {
-        if (isset($uploadPath) && file_exists($uploadPath)) {
-            unlink($uploadPath);
-        }
-        if (isset($csvPath) && $csvPath !== $uploadPath && file_exists($csvPath)) {
-            unlink($csvPath);
-        }
-
         echo json_encode([
             'success' => false,
             'message' => $e->getMessage()
