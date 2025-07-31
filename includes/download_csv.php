@@ -134,28 +134,8 @@ function realizarLimpiezaCompleta($conn)
 
 function mostrarErrorDescarga($mensaje)
 {
+    include "config/error.html"
     ?>
-    <!DOCTYPE html>
-    <html lang="es">
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Error - Descarga CSV</title>
-        <link rel="stylesheet" href="css/error.css">
-    </head>
-
-    <body>
-        <div class="error-container">
-            <h2> Error al generar archivo</h2>
-            <p><?php echo htmlspecialchars($mensaje); ?></p>
-            <a href="../index.php" class="back-btn"> Volver al inicio</a>
-
-            <div class="cleanup-info">
-                <h4> Limpieza automática</h4>
-                <p>Si había datos procesados, puede realizar una limpieza manual desde el panel principal.</p>
-            </div>
-        </div>
 
         <script>
             setTimeout(function () {
