@@ -106,12 +106,10 @@ function convertirXLSXACSVNativo($archivoXLSX)
                     $rowData[$colNum] = $cellValue;
                 }
 
-
                 $rowData = array_values($rowData);
                 while (count($rowData) > 0 && end($rowData) === '') {
                     array_pop($rowData);
                 }
-
 
                 if (!empty($rowData) && !empty(array_filter($rowData))) {
                     fputcsv($csvFile, $rowData);
@@ -119,12 +117,11 @@ function convertirXLSXACSVNativo($archivoXLSX)
             }
         }
 
-
         fclose($csvFile);
         return $csvPath;
 
     } catch (Exception $e) {
-        if (isset($csvFile) && $csvFile !== false) {
+        if (isset($csvFile) && is_resource($csvFile)) {
             fclose($csvFile);
         }
         if (isset($csvPath) && file_exists($csvPath)) {
@@ -133,7 +130,6 @@ function convertirXLSXACSVNativo($archivoXLSX)
         throw new Exception("Error convirtiendo XLSX a CSV: " . $e->getMessage());
     }
 }
-
 
 function obtenerNumeroColumna($cellRef)
 {
@@ -147,7 +143,6 @@ function obtenerNumeroColumna($cellRef)
 
     return $colNum - 1;
 }
-
 
 function obtenerCentroCosto($ilabor, $codigo_elemento)
 {
@@ -240,6 +235,7 @@ function procesarInventarioIneditto($archivo_csv)
 
         $headers = fgetcsv($handle, 1000, ",");
         if ($headers === FALSE) {
+            fclose($handle);
             throw new Exception("No se pudieron leer los headers del archivo");
         }
 
@@ -263,6 +259,7 @@ function procesarInventarioIneditto($archivo_csv)
             }
         }
         fclose($handle);
+        
         if ($archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -319,6 +316,9 @@ function procesarInventarioIneditto($archivo_csv)
         return $procesados;
 
     } catch (Exception $e) {
+        if (isset($handle) && is_resource($handle)) {
+            fclose($handle);
+        }
         if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }
@@ -342,6 +342,7 @@ function procesarArchivoCSV($archivo_csv, $callback)
         $archivoAProcesar = convertirExcelACSVNativo($archivo_csv);
     }
 
+    $handle = null;
     try {
         if (!file_exists($archivoAProcesar)) {
             throw new Exception("Archivo no encontrado: $archivoAProcesar");
@@ -369,7 +370,9 @@ function procesarArchivoCSV($archivo_csv, $callback)
         return $importados;
 
     } catch (Exception $e) {
-        if (isset($handle)) fclose($handle);
+        if ($handle && is_resource($handle)) {
+            fclose($handle);
+        }
         if (isset($archivoAProcesar) && $archivoAProcesar !== $archivo_csv && file_exists($archivoAProcesar)) {
             unlink($archivoAProcesar);
         }

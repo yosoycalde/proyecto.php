@@ -29,9 +29,10 @@ try {
         throw new Exception("No se encontraron datos para procesar");
     }
 
+    ob_clean();
+    
     ob_start();
     $csvOutput = fopen('php://output', 'w');
-
     fprintf($csvOutput, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
     $headers = [
@@ -63,14 +64,14 @@ try {
             $row['INVENTARIO'] ?? '',
             $row['IRECURSO'] ?? '',
             $row['ICCSUBCC'] ?? '',
-            '', 
+            '', // ILABOR vacío según especificación
             $row['QCANTLUN'] ?? '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '', 
+            '', // QCANTMAR vacío
+            '', // QCANTMIE vacío
+            '', // QCANTJUE vacío
+            '', // QCANTVIE vacío
+            '', // QCANTSAB vacío
+            '', // QCANTDOM vacío
             $row['SOBSERVAC'] ?? ''
         ];
         fputcsv($csvOutput, $csvRow);
@@ -80,10 +81,12 @@ try {
     $csvContent = ob_get_contents();
     ob_end_clean();
 
+    // Realizar limpieza después de obtener el contenido
     realizarLimpiezaCompleta($conn);
 
     $filename = 'contapyme_' . date('Y-m-d_H-i-s') . '.csv';
 
+    // Headers para la descarga
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: no-cache, must-revalidate');
@@ -113,8 +116,9 @@ function realizarLimpiezaCompleta($conn)
         if (is_dir($uploadDir)) {
             $archivos = scandir($uploadDir);
             foreach ($archivos as $archivo) {
-                if ($archivo === '.' || $archivo === '..')
+                if ($archivo === '.' || $archivo === '..') {
                     continue;
+                }
 
                 $rutaArchivo = $uploadDir . $archivo;
                 if (is_file($rutaArchivo) && preg_match('/^\d+_/', $archivo)) {
@@ -134,8 +138,7 @@ function realizarLimpiezaCompleta($conn)
 
 function mostrarErrorDescarga($mensaje)
 {
-    include "config/error.html"
-    ?>
-    <?php
+    // Incluir correctamente el archivo de error
+    include __DIR__ . "/../config/error.html";
 }
 ?>
