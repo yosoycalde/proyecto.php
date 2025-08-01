@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 require_once '../config/database.php';
+require_once '../config/handler.php';
 
 try {
     $database = new Database();
@@ -13,9 +14,10 @@ try {
                 FSOPORT as fecha_movimiento,
                 centro_costo_asignado,
                 ILABOR as labor_original,
-                SOBSERVAC as observaciones
+                SOBSERVAC as observaciones,
+                INUMSOP as numero_consecutivo
               FROM inventarios_temp 
-              ORDER BY fecha_procesamiento DESC
+              ORDER BY INUMSOP DESC
               LIMIT 15";
 
     $stmt = $conn->prepare($query);
@@ -28,7 +30,10 @@ try {
                     COUNT(DISTINCT centro_costo_asignado) as centros_costo_utilizados,
                     SUM(QCANTLUN) as suma_total_cantidades,
                     MIN(fecha_procesamiento) as primer_registro,
-                    MAX(fecha_procesamiento) as ultimo_registro
+                    MAX(fecha_procesamiento) as ultimo_registro,
+                    MIN(INUMSOP) as primer_inumsop,
+                    MAX(INUMSOP) as ultimo_inumsop,
+                    COUNT(DISTINCT INUMSOP) as inumsop_unicos
                    FROM inventarios_temp";
 
     $statsStmt = $conn->prepare($statsQuery);
@@ -44,11 +49,36 @@ try {
     $distStmt->execute();
     $distribucion = $distStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Obtener información del contador
+    $estadoContador = obtenerEstadoContador();
+    
+    // Verificar integridad de INUMSOP
+    $integridadQuery = "SELECT 
+                        COUNT(*) as total_registros,
+                        COUNT(DISTINCT INUMSOP) as inumsop_unicos,
+                        (COUNT(*) - COUNT(DISTINCT INUMSOP)) as duplicados_inumsop
+                        FROM inventarios_temp";
+    
+    $integridadStmt = $conn->prepare($integridadQuery);
+    $integridadStmt->execute();
+    $integridad = $integridadStmt->fetch(PDO::FETCH_ASSOC);
+
     echo json_encode([
         'success' => true,
         'data' => $results,
         'statistics' => $stats,
-        'distribucion_centros_costo' => $distribucion
+        'distribucion_centros_costo' => $distribucion,
+        'contador_info' => [
+            'valor_actual' => $estadoContador['valor_actual'],
+            'proximo_valor' => $estadoContador['proximo_valor'],
+            'fecha_actualizacion' => $estadoContador['fecha_actualizacion'] ?? date('Y-m-d H:i:s')
+        ],
+        'integridad_inumsop' => [
+            'total_registros' => $integridad['total_registros'],
+            'inumsop_unicos' => $integridad['inumsop_unicos'],
+            'duplicados' => $integridad['duplicados_inumsop'],
+            'integridad_ok' => $integridad['duplicados_inumsop'] == 0
+        ]
     ]);
 
 } catch (Exception $e) {
