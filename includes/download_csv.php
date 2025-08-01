@@ -81,12 +81,10 @@ try {
     $csvContent = ob_get_contents();
     ob_end_clean();
 
-    // Realizar limpieza después de obtener el contenido
     realizarLimpiezaCompleta($conn);
 
     $filename = 'contapyme_' . date('Y-m-d_H-i-s') . '.csv';
 
-    // Headers para la descarga
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: no-cache, must-revalidate');
@@ -138,7 +136,6 @@ function realizarLimpiezaCompleta($conn)
 
 function mostrarErrorDescarga($mensaje)
 {
-    // Incluir correctamente el archivo de error
     include __DIR__ . "/../config/error.html";
 }
 ?>
