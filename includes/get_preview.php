@@ -49,10 +49,8 @@ try {
     $distStmt->execute();
     $distribucion = $distStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Obtener información del contador
     $estadoContador = obtenerEstadoContador();
     
-    // Verificar integridad de INUMSOP
     $integridadQuery = "SELECT 
                         COUNT(*) as total_registros,
                         COUNT(DISTINCT INUMSOP) as inumsop_unicos,

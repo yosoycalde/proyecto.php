@@ -1,5 +1,4 @@
 <?php
-// includes/contador_manager.php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
@@ -22,7 +21,6 @@ function inicializarTablaContadores()
         )";
         $conn->exec($createTableQuery);
         
-        // Insertar contador INUMSOP si no existe
         $insertCounterQuery = "INSERT IGNORE INTO contadores (nombre, valor_actual) VALUES ('INUMSOP', 0)";
         $conn->exec($insertCounterQuery);
         
