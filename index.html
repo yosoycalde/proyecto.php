@@ -15,44 +15,6 @@
         <h1>Procesador de Inventarios Ineditto → ContaPyme</h1>
 
         <div class="upload-section">
-            <h2>Configuración Inicial</h2>
-            <p class="section-description">Antes de procesar inventarios, debe configurar los centros de costos y
-                elementos del sistema.</p>
-
-            <div class="config-buttons">
-                <button id="importCentrosBtn" class="config-btn">
-                    Importar Centros de Costos
-                </button>
-                <button id="importElementosBtn" class="config-btn">
-                    Importar Elementos
-                </button>
-            </div>
-
-            <input type="file" id="configFile" accept=".csv,.xlsx,.xls" style="display: none;">
-
-            <div class="config-info">
-                <h4>Formatos esperados:</h4>
-                <div class="format-list">
-                    <div class="format-item">
-                        <strong>Centros de Costos:</strong> CSV, XLSX o XLS con columnas: Codigo, Nombre
-                    </div>
-                    <div class="format-item">
-                        <strong>Elementos:</strong> CSV, XLSX o XLS con columnas: Cód. Artículo, Referencia, Centro
-                    </div>
-                </div>
-                <div class="format-description">
-                    <p><strong>Formatos soportados:</strong></p>
-                    <ul>
-                        <li><strong>CSV:</strong> Archivo de texto separado por comas</li>
-                        <li><strong>XLSX:</strong> Excel moderno (recomendado)</li>
-                        <li><strong>XLS:</strong> Excel antiguo (compatibilidad limitada)</li>
-                    </ul>
-                    <p><em>Los archivos Excel se convierten automáticamente a CSV para procesamiento.</em></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="upload-section">
             <h2>Procesar Inventario Ineditto</h2>
             <p class="section-description">Suba el archivo CSV o Excel exportado desde Ineditto para convertirlo al
                 formato ContaPyme.</p>
@@ -118,6 +80,47 @@
                     <thead id="tableHead"></thead>
                     <tbody id="tableBody"></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="upload-section">
+        <h2>Configuración Inicial</h2>
+        <p class="section-description">Antes de procesar inventarios, debe configurar los centros de costos y
+            elementos del sistema.</p>
+
+        <div class="config-buttons">
+            <p id="importCentrosBtn" class="config-btn">
+                Importar Centros de Costos
+            </p>
+            <p id="importElementosBtn" class="config-btn">
+                Importar Elementos
+            </p>
+        </div>
+
+        <input type="file" id="configFile" accept=".csv,.xlsx,.xls" style="display: none;">
+
+        <div class="config-info">
+            <h4>Formatos esperados:</h4>
+            <div class="format-list">
+                <div class="format-item">
+                    <strong>Centros de Costos:</strong> CSV, XLSX o XLS con columnas: Codigo, Nombre
+                </div>
+                <div class="format-item">
+                    <strong>Elementos:</strong> CSV, XLSX o XLS con columnas: Cód. Artículo, Referencia, Centro
+                </div>
+            </div>
+            <div class="format-description">
+                <p><strong>Formatos soportados:</strong></p>
+                <ul>
+                    <li><strong>CSV:</strong> Archivo de texto separado por comas</li>
+                    <li><strong>XLSX:</strong> Excel moderno (recomendado)</li>
+                    <li><strong>XLS:</strong> Excel antiguo (compatibilidad limitada)</li>
+                </ul>
+                <p><em>Los archivos Excel se convierten automáticamente a CSV para procesamiento.</em></p>
             </div>
         </div>
     </div>
