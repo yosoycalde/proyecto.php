@@ -129,12 +129,6 @@ button:hover {
     box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
 }
 
-.config-btn {
-    background: linear-gradient(135deg, #6f42c1, #5a2d91);
-    margin-right: 15px;
-    margin-bottom: 15px;
-}
-
 .config-btn:hover {
     box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
 }
