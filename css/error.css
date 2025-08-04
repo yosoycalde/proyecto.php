@@ -13,25 +13,3 @@ body {
     padding: 30px;
     border-radius: 10px;
 }
-
-.back-btn {
-    background: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    margin-top: 20px;
-}
-
-.cleanup-info {
-    background: #d1ecf1;
-    border: 1px solid #bee5eb;
-    color: #0c5460;
-    padding: 15px;
-    border-radius: 5px;
-    margin-top: 20px;
-    font-size: 0.9em;
-}
