@@ -3,10 +3,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const resultsSection = document.getElementById('results');
     const previewSection = document.getElementById('preview');
     const downloadBtn = document.getElementById('downloadBtn');
-    const configFile = document.getElementById('configFile');
-
-    const importCentrosBtn = document.getElementById('importCentrosBtn');
-    const importElementosBtn = document.getElementById('importElementosBtn');
 
     const actionButtons = document.querySelector('.action-buttons');
     if (actionButtons) {
@@ -24,8 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-
-    importCentrosBtn.addEventListener('click', function () {
         configFile.accept = '.csv,.xlsx,.xls';
         configFile.onchange = function () {
             if (this.files.length > 0) {
@@ -49,56 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
         configFile.click();
     });
 
-    importElementosBtn.addEventListener('click', function () {
-        configFile.accept = '.csv,.xlsx,.xls';
-        configFile.onchange = function () {
-            if (this.files.length > 0) {
-                const file = this.files[0];
-                const fileExt = file.name.split('.').pop().toLowerCase();
-
-                if (!['csv', 'xlsx', 'xls'].includes(fileExt)) {
-                    showMessage('Solo se permiten archivos CSV, XLSX o XLS', 'error');
-                    return;
-                }
-
-                if (fileExt === 'xls') {
-                    if (!confirm('Los archivos XLS pueden tener problemas de compatibilidad. ¿Desea continuar? Se recomienda usar XLSX o CSV.')) {
-                        return;
-                    }
-                }
-
-                importarArchivo('import_elementos', file, 'Elementos');
-            }
-        };
-        configFile.click();
-    });
-
-    function importarArchivo(action, file, tipo) {
-        const formData = new FormData();
-        formData.append('configFile', file);
-        formData.append('action', action);
-
-        const fileExt = file.name.split('.').pop().toUpperCase();
-
-        showMessage(`Procesando archivo ${fileExt} - Importando ${tipo}...`, 'info');
-
-        fetch('includes/upload_handler.php', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMessage(` ${data.message} (${data.records} registros)`, 'success');
-                } else {
-                    showMessage(` Error al importar ${tipo}: ${data.message}`, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessage(` Error de conexión al importar ${tipo}`, 'error');
-            });
-    }
+    // Se eliminaron los botones de importación ya que ahora es automático
 
     uploadForm.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -131,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         processInfo.innerHTML = `<p class="info"> Procesando archivo ${fileExt.toUpperCase()} de inventario...</p>`;
         resultsSection.style.display = 'block';
 
-        fetch('includes/upload_handler.php', {
+        fetch('includes/upload_handler_new.php', {
             method: 'POST',
             body: formData
         })
@@ -361,5 +306,5 @@ document.addEventListener('DOMContentLoaded', function () {
     if (csvFileInput) {
         csvFileInput.accept = '.csv,.xlsx,.xls';
     }
-});
+;
 
