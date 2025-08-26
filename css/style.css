@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000000 5%, #8400ff 100%);
     padding: 20px;
     min-height: 100vh;
 }
@@ -29,7 +29,7 @@ body {
     left: 0;
     right: 0;
     height: 5px;
-    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #000000);
 }
 
 h1 {
@@ -49,24 +49,13 @@ h2 {
     padding-left: 15px;
 }
 
-.upload-section,
-.results-section,
-.preview-section {
-    margin-bottom: 30px;
-    padding: 25px;
-    border: 1px solid #e8e1ed;
-    border-radius: 10px;
-    background: #f8f9fa;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
 .upload-section:hover,
 .results-section:hover,
 .preview-section:hover {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
 }
+
 
 
 .file-input-container {
@@ -87,12 +76,12 @@ input[type="file"] {
 
 input[type="file"]:focus {
     outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: #114e8f;
+    box-shadow: 0 0 0 0.2rem rgba(0, 92, 190, 0.25);
 }
 
 button {
-    background: linear-gradient(135deg, #007bff, #0056b3);
+    background: linear-gradient(135deg, #004fa3, #0056b3);
     color: white;
     padding: 12px 25px;
     border: none;
@@ -111,7 +100,7 @@ button::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(223, 204, 204, 0.39), transparent);
     transition: left 0.5s ease;
 }
 
@@ -121,15 +110,11 @@ button:hover::before {
 
 button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-}
-
-.config-btn:hover {
-    box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.658);
 }
 
 .download-btn {
-    background: linear-gradient(135deg, #28a745, #1b8534);
+    background: linear-gradient(135deg, #0d942d, #055c19);
     font-size: 1.1em;
     padding: 15px 30px;
 }
@@ -138,38 +123,21 @@ button:hover {
     box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
 }
 
-.config-buttons {
-    margin-bottom: 25px;
-}
-
 .format-info {
     margin-top: 20px;
     padding: 20px;
-    background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+    background: linear-gradient(135deg, #ecf7ffbd, #ec73ffc0);
     border-radius: 8px;
-    border-left: 4px solid #2196f3;
+    border-left: 4px solid #0e84e6e7;
 }
 
 .format-info h3,
 .format-info h4 {
     margin-top: 0;
-    color: #1565c0;
+    color: #460072;
     margin-bottom: 15px;
 }
 
-.format-description {
-    margin-bottom: 15px;
-    padding: 15px;
-    background: #ffffff;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
-}
-
-.format-description p {
-    margin: 0;
-    color: #424242;
-    line-height: 1.6;
-}
 
 .format-description code {
     background: #f5f5f5;
@@ -217,18 +185,6 @@ button:hover {
     padding: 12px 15px;
     border-radius: 6px;
     border-left: 3px solid #28a745;
-}
-
-.config-info {
-    background: #e8f5e8;
-    border: 1px solid #c3e6c3;
-    border-radius: 6px;
-    padding: 15px;
-    margin-top: 20px;
-}
-
-.format-list {
-    margin-top: 10px;
 }
 
 .format-item {
@@ -386,11 +342,12 @@ tr:hover {
     }
 }
 
-.upload-section,
 .results-section,
 .preview-section {
     animation: fadeIn 0.5s ease-out;
 }
+
+
 
 @keyframes spin {
     0% {

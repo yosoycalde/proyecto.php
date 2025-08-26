@@ -5,11 +5,30 @@ body {
     padding: 20px;
     text-align: center;
 }
-
 .error-container {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
+    background: #cf9a9e;
+    border: 1px solid #d18991;
+    color: #6b050f;
     padding: 30px;
-    border-radius: 10px;
+    border-radius: 10px;    
+}
+.back-btn {
+    background: #014792;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;  
+    display: inline-block;
+    margin-top: 20px;
+}
+.cleanup-info {
+    background: #72cddd;
+    border: 1px solid #55ccdf;
+    color: #093b44;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+    font-size: 0.9em;
 }

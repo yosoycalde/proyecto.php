@@ -1,4 +1,4 @@
-<?php
+<?php 
 class Database
 {
     private $host = 'localhost';
@@ -6,7 +6,6 @@ class Database
     private $username = 'root';
     private $password = '';
     private $conn;
-
     public function connect()
     {
         $this->conn = null;
@@ -20,9 +19,7 @@ class Database
         } catch (PDOException $e) {
             echo "Error de conexión:" . $e->getMessage();
         }
-
-        return $this->conn;
+        return $this->conn; 
     }
-
 }
 ?>

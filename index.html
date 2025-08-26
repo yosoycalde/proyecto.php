@@ -6,32 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interfaz Ineditto → ContaPyme</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="icon/interfaz.png">
+    <link rel="icon" href="icon/csv.png">
 </head>
 
 <body>
     <canvas id="particleCanvas"></canvas>
     <div class="container">
         <h1>Procesador de Inventarios Ineditto → ContaPyme</h1>
-
         <div class="upload-section">
-            <h2>Procesar Inventario Ineditto</h2>
-            <p class="section-description">Suba el archivo CSV o Excel exportado desde Ineditto para convertirlo al
-                formato ContaPyme.</p>
-
+            <h2>Proceso Ineditto</h2>
             <form id="uploadForm" enctype="multipart/form-data">
                 <div class="file-input-container">
                     <input type="file" id="csvFile" name="csvFile" accept=".csv,.xlsx,.xls" required>
                     <button type="submit">Procesar Archivo</button>
                 </div>
             </form>
-
             <div class="format-info">
                 <h3>Formato esperado del archivo Ineditto:</h3>
                 <div class="format-description">
-                    <p><strong>Columnas requeridas:</strong></p>
+                    <p><strong>Columnas aceptadas:</strong></p>
                     <code>IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR, QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, SOBSERVAC</code>
-
                     <p><strong>Formatos aceptados:</strong></p>
                     <ul>
                         <li><strong>CSV:</strong> Archivo de texto con datos separados por comas</li>
@@ -39,21 +33,10 @@
                         <li><strong>XLS:</strong> Archivo Excel clásico (compatibilidad básica)</li>
                     </ul>
                 </div>
-
-                <div class="logic-explanation">
-                    <h4>Lógica de Procesamiento:</h4>
-                    <ul>
-                        <li><strong>Si ILABOR tiene valor:</strong> Se busca el centro de costo correspondiente</li>
-                        <li><strong>Si no se encuentra ninguno:</strong> Se asigna el centro de costo por defecto
-                            (REVISTAS)</li>
-                        <li><strong>Archivos Excel:</strong> Se procesan automáticamente sin pérdida de datos</li>
-                    </ul>
-                </div>
             </div>
         </div>
-
         <div class="results-section" id="results" style="display: none;">
-            <h2> Resultados del Procesamiento</h2>
+            <h2> Resultados del Proceso</h2>
             <div id="processInfo"></div>
             <div class="action-buttons">
                 <button id="downloadBtn" class="download-btn" style="display: none;">
@@ -61,19 +44,15 @@
                 </button>
             </div>
         </div>
-
         <div class="preview-section" id="preview" style="display: none;">
             <h2> Vista Previa Formato ContaPyme</h2>
-
             <div class="format-description">
                 <p><strong>Formato de salida ContaPyme:</strong></p>
                 <code>IEMP, FSOPORT, ITDSOP, INUMSOP, INVENTARIO, IRECURSO, ICCSUBCC, ILABOR, QCANTLUN, QCANTMAR, QCANTMIE, QCANTJUE, QCANTVIE, QCANTSAB, QCANTDOM, SOBSERVAC</code>
                 <p class="note"><em>Nota: Los campos ILABOR y días de la semana (MAR-DOM) se envían vacíos según
                         especificación. La salida siempre es en formato CSV.</em></p>
             </div>
-
             <div id="distribucion" class="distribucion-section"></div>
-
             <div class="table-container">
                 <table id="dataTable">
                     <thead id="tableHead"></thead>
@@ -82,16 +61,8 @@
             </div>
         </div>
     </div>
-
-    <p class="section-description"></p>
-    <div class="config-buttons">
-        <p id="importCentrosBtn" class="config-btn">
-        </p>
-        <p id="importElementosBtn" class="config-btn">
-        </p>
-    </div>
-    <input type="file" id="configFile" accept=".csv,.xlsx,.xls" style="display: none;">
     <script src="js/main.js"></script>
+    <script src="js/animation.js"></script>
 </body>
 
 </html>
